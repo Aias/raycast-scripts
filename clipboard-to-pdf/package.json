@@ -4,7 +4,7 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
-    "start": "./run-script.sh"
+    "start": "node main.js"
   },
   "dependencies": {
     "clipboardy": "^4.0.0",

@@ -30,4 +30,4 @@ else
 fi
 
 # Run the Node.js script
-"$NODE_PATH" "$SCRIPT_DIR/main.js" "$1"
+"$NODE_PATH" "$SCRIPT_DIR/clipboard-to-pdf/main.js" "$1"
