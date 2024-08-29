@@ -1,19 +1,3 @@
-#!/usr/bin/env node
-
-// Required parameters:
-// @raycast.schemaVersion 1
-// @raycast.title Markdown to PDF
-// @raycast.mode compact
-
-// Optional parameters:
-// @raycast.icon 🤖
-// @raycast.argument1 { "type": "text", "placeholder": "Output filename" }
-
-// Documentation:
-// @raycast.description Converts markdown content from the clipboard to a PDF output in the current active Finder window or /output folder.
-// @raycast.author Nick Trombley
-// @raycast.authorURL https://raycast.com/Aias
-
 import clipboardy from "clipboardy";
 import markdownpdf from "markdown-pdf";
 import fs from "fs";
