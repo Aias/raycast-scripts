@@ -1,0 +1,16 @@
+{
+  "name": "markdown-to-pdf",
+  "packageManager": "yarn@4.4.1",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "markdown-pdf": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
