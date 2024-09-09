@@ -126,6 +126,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"clipboard-to-pdf@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "clipboard-to-pdf@workspace:."
+  dependencies:
+    clipboardy: "npm:^4.0.0"
+    markdown-pdf: "npm:^11.0.0"
+  languageName: unknown
+  linkType: soft
+
 "clipboardy@npm:^4.0.0":
   version: 4.0.0
   resolution: "clipboardy@npm:4.0.0"
@@ -632,15 +641,6 @@ __metadata:
   checksum: 10c0/d84ab197fb6b4b3e9f6fc373600ad2aa0ade0194e60d9c13a761f64419f085bce2649d2aff083ac1783fe170447d24db1933a981c02206e9912c46b15c08154c
   languageName: node
   linkType: hard
-
-"markdown-to-pdf@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "markdown-to-pdf@workspace:."
-  dependencies:
-    clipboardy: "npm:^4.0.0"
-    markdown-pdf: "npm:^11.0.0"
-  languageName: unknown
-  linkType: soft
 
 "merge-stream@npm:^2.0.0":
   version: 2.0.0

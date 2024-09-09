@@ -1,18 +1,16 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Clipboard to PDF
+# @raycast.title Print Clipboard
 # @raycast.mode compact
 
 # Optional parameters:
-# @raycast.icon 🤖
-# @raycast.argument1 { "type": "text", "placeholder": "Output filename" }
+# @raycast.icon 🖨️
 
-# Documentation:
-# @raycast.description Converts clipboard content (markdown or plain text) to a PDF output in the current active Finder window.
-# @raycast.author Nick Trombley
-# @raycast.authorURL https://raycast.com/Aias
+# @raycast.packageName Print Clipboard
+
+# @raycast.description Print the contents of the clipboard using the notetaker endpoint
 
 # Source Zsh configuration
 source ~/.zshrc
@@ -30,4 +28,4 @@ else
 fi
 
 # Run the Node.js script
-"$NODE_PATH" "$SCRIPT_DIR/node-scripts/clipboard-to-pdf.js" "$1"
+"$NODE_PATH" "$SCRIPT_DIR/node-scripts/clipboard-to-print.js" "$1"
