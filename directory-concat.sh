@@ -32,16 +32,18 @@ process_files() {
     local base_dir="$2"
     
     for file in "$dir"/*; do
-        if [ -f "$file" ]; then
-            relative_path="${file#$base_dir/}"
-            file_extension=$(get_file_extension "$file")
-            echo "**$relative_path**" >> "$output_file"
-            echo '```'"$file_extension" >> "$output_file"
-            cat "$file" >> "$output_file"
-            echo '```' >> "$output_file"
-            echo "" >> "$output_file"
-        elif [ -d "$file" ] && [ "$recursive" = true ]; then
-            process_files "$file" "$base_dir"
+        if [ "$file" != "$output_file" ]; then  # Exclude the output file
+            if [ -f "$file" ]; then
+                relative_path="${file#$base_dir/}"
+                file_extension=$(get_file_extension "$file")
+                echo "**$relative_path**" >> "$output_file"
+                echo '```'"$file_extension" >> "$output_file"
+                cat "$file" >> "$output_file"
+                echo '```' >> "$output_file"
+                echo "" >> "$output_file"
+            elif [ -d "$file" ] && [ "$recursive" = true ]; then
+                process_files "$file" "$base_dir"
+            fi
         fi
     done
 }
@@ -62,7 +64,7 @@ if [ ! -d "$directory_path" ]; then
     exit 1
 fi
 
-output_file="${directory_path%/}_concat.md"
+output_file="${directory_path%/}/_directory_concatenated.md"
 
 # Clear or create the output file
 > "$output_file"
