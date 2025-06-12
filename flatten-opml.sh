@@ -17,5 +17,8 @@
 # Load zsh environment
 source ~/.zshrc
 
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
+
 # Run the Python script using uv
-cd "$HOME/Code/personal/raycast-scripts/flatten_opml" && uv run python flatten_opml.py "$@"
+cd "$SCRIPT_DIR/flatten_opml" && uv run python flatten_opml.py "$@"

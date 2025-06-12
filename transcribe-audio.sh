@@ -12,5 +12,8 @@
 # Load zsh environment (includes environment variables)
 source ~/.zshrc
 
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
+
 # Run the Bun/TypeScript transcriber
 bun "$HOME/Code/scripts/audio-transcriber/index.ts" "$@"

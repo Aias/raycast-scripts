@@ -19,5 +19,8 @@
 # Load zsh environment
 source ~/.zshrc
 
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
+
 # Run the actual script
-exec "$HOME/Code/personal/raycast-scripts/directory-concat/directory-concat.sh" "$@"
+exec "$SCRIPT_DIR/directory-concat/directory-concat.sh" "$@"

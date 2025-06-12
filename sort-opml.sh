@@ -17,5 +17,8 @@
 # Load zsh environment
 source ~/.zshrc
 
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
+
 # Run the Python script using uv
-cd "$HOME/Code/personal/raycast-scripts/sort_opml" && uv run python sort_opml.py "$@"
+cd "$SCRIPT_DIR/sort_opml" && uv run python sort_opml.py "$@"

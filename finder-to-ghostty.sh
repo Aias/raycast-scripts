@@ -16,5 +16,8 @@
 # Load zsh environment
 source ~/.zshrc
 
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
+
 # Run the actual script
-exec "$HOME/Code/personal/raycast-scripts/finder-to-ghostty/finder-to-ghostty.sh" "$@"
+exec "$SCRIPT_DIR/finder-to-ghostty/finder-to-ghostty.sh" "$@"

@@ -16,9 +16,8 @@
 # Load zsh environment
 source ~/.zshrc
 
-# Load nvm if needed for Node.js
-export NVM_DIR="$HOME/.nvm"
-[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
 
 # Run the TypeScript script
-cd "$HOME/Code/personal/raycast-scripts/clipboard-to-markdown" && yarn start
+cd "$SCRIPT_DIR/clipboard-to-markdown" && yarn start

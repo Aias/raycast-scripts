@@ -18,5 +18,8 @@
 # Load zsh environment (includes homebrew, python, etc)
 source ~/.zshrc
 
+# Get the directory where this script is located
+SCRIPT_DIR="${0:a:h}"
+
 # Run the actual script
 exec "$HOME/Code/scripts/extract-tweet-media/extract-tweet-media.sh" "$@"
