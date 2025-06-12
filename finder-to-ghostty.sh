@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh -l
 
 # Required parameters:
 # @raycast.schemaVersion 1
@@ -9,8 +9,12 @@
 # @raycast.icon 👻
 
 # Documentation:
-# @raycast.description Opens the currently selected Finder window in the Ghostty terminal emulator.
-# @raycast.author Aias
-# @raycast.authorURL https://raycast.com/Aias
+# @raycast.description Opens the currently selected Finder window in the Ghostty terminal emulator
+# @raycast.author Nick Trombley
+# @raycast.authorURL https://github.com/Aias
 
-open -a Ghostty "$FINDER_PATH"
+# Load zsh environment
+source ~/.zshrc
+
+# Run the actual script
+exec "$HOME/Code/personal/raycast-scripts/finder-to-ghostty/finder-to-ghostty.sh" "$@"

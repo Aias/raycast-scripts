@@ -1,22 +1,25 @@
-#!/usr/bin/env zsh
+#!/bin/zsh -l
 
 # Required parameters:
 # @raycast.schemaVersion 1
 # @raycast.title Clipboard to PDF
 # @raycast.mode compact
+
 # Optional parameters:
-# @raycast.icon 🤖
+# @raycast.icon 📄
 # @raycast.argument1 { "type": "text", "placeholder": "Output filename" }
+
 # Documentation:
 # @raycast.description Converts clipboard content (markdown or plain text) to a PDF output in the current active Finder window.
 # @raycast.author Nick Trombley
-# @raycast.authorURL https://raycast.com/Aias
+# @raycast.authorURL https://github.com/Aias
 
-# Source Zsh configuration
+# Load zsh environment
 source ~/.zshrc
 
-# Get the directory of the script
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Load nvm if needed for Node.js
+export NVM_DIR="$HOME/.nvm"
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
 # Run the Node.js script
-node "$SCRIPT_DIR/node-scripts/clipboard-to-pdf.js" "$1"
+cd "$HOME/Code/personal/raycast-scripts/clipboard-to-pdf" && node clipboard-to-pdf.js "$@"

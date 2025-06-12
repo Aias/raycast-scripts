@@ -1,0 +1,8 @@
+[project]
+name = "airtable-to-network"
+version = "1.0.0"
+description = "Convert CSV from Airtable to Gephi-compatible format"
+requires-python = ">=3.8"
+
+[tool.uv]
+dev-dependencies = []
