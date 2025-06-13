@@ -13,12 +13,20 @@ const customSpellings: CustomSpelling[] = [
   { from: ["remark"], to: "Remark" },
 ];
 
-export async function transcribe(audioPath: string): Promise<Transcript> {
+export async function transcribe(
+  audioPath: string,
+  speakersExpected?: number,
+): Promise<Transcript> {
   console.log("🎙️ Transcribing with AssemblyAI...");
+  if (speakersExpected) {
+    console.log(`   Expected speakers: ${speakersExpected}`);
+  }
+
   const transcript = await assemblyai.transcripts.transcribe({
     speech_model: "slam-1",
     audio: audioPath,
     speaker_labels: true,
+    speakers_expected: speakersExpected,
     format_text: true,
     punctuate: true,
     disfluencies: false,

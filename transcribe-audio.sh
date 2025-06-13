@@ -4,6 +4,7 @@
 # @raycast.title Transcribe Audio
 # @raycast.mode fullOutput
 # @raycast.argument1 { "type": "text", "placeholder": "Audio file path" }
+# @raycast.argument2 { "type": "text", "placeholder": "Number of speakers", "optional": true }
 # @raycast.icon 🎙
 # @raycast.packageName AI Utilities
 # @raycast.author Nick Trombley

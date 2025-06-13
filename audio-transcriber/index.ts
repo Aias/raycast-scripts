@@ -19,6 +19,14 @@ if (!fs.existsSync(inputPath)) {
   process.exit(1);
 }
 
+// Get optional number of speakers from command line
+const speakersArg = process.argv[3];
+const speakersExpected = speakersArg ? parseInt(speakersArg, 10) : undefined;
+if (speakersExpected !== undefined && (isNaN(speakersExpected) || speakersExpected < 1)) {
+  console.error(`⛔ Invalid number of speakers: ${speakersArg}`);
+  process.exit(1);
+}
+
 // Create temporary output folder (will be renamed later)
 let outputDir = createOutputFolder(inputPath);
 console.log(`📁 Temporary output folder: ${outputDir}`);
@@ -29,7 +37,7 @@ const wavPath = await convertToWav(inputPath, outputDir);
 /* ---------- 2. Transcribe with AssemblyAI ---------- */
 let transcript;
 try {
-  transcript = await transcribe(wavPath);
+  transcript = await transcribe(wavPath, speakersExpected);
 } catch (error) {
   console.error("Transcription failed:", error);
   process.exit(1);
