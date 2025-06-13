@@ -50,7 +50,64 @@ export function parseTranscriptLine(line: string): TranscriptLine | null {
   };
 }
 
+function splitIntoSentences(text: string): string[] {
+  // Split by sentence endings, but keep the punctuation with the sentence
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  return sentences.map((s) => s.trim());
+}
+
+function chunkBySentenceCount(sentences: string[], maxSentences: number = 10): string[] {
+  const chunks: string[] = [];
+
+  for (let i = 0; i < sentences.length; i += maxSentences) {
+    const chunk = sentences.slice(i, i + maxSentences).join(" ");
+    chunks.push(chunk);
+  }
+
+  return chunks;
+}
+
 async function cleanText(text: string): Promise<string> {
+  // Split into sentences and chunk if needed
+  const sentences = splitIntoSentences(text);
+
+  // If the text has more than 10 sentences, process in chunks
+  if (sentences.length > 10) {
+    const chunks = chunkBySentenceCount(sentences, 10);
+    const cleanedChunks: string[] = [];
+
+    for (const chunk of chunks) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4.1-mini",
+          temperature: 0.1,
+          messages: [
+            {
+              role: "user",
+              content: makeCleaningPrompt(chunk),
+            },
+          ],
+        });
+
+        const cleaned = response.choices[0].message.content?.trim() ?? chunk;
+        // Remove any backticks that might be in the response
+        const cleanedChunk = cleaned
+          .replace(/^```\n?/, "")
+          .replace(/\n?```$/, "")
+          .trim();
+
+        cleanedChunks.push(cleanedChunk);
+      } catch (error) {
+        console.error("Error cleaning chunk:", error);
+        cleanedChunks.push(chunk); // Return original chunk if cleaning fails
+      }
+    }
+
+    // Join chunks with a space
+    return cleanedChunks.join(" ");
+  }
+
+  // For shorter texts, process as before
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
@@ -90,6 +147,7 @@ export async function cleanTranscript(transcript: string): Promise<string> {
   // Process in batches for parallel execution
   const BATCH_SIZE = 20;
   const cleanedLines: string[] = [];
+  let totalSentenceChunks = 0;
 
   for (let i = 0; i < parsedLines.length; i += BATCH_SIZE) {
     const batch = parsedLines.slice(i, i + BATCH_SIZE);
@@ -102,6 +160,13 @@ export async function cleanTranscript(transcript: string): Promise<string> {
       batch.map(async ({ original, parsed }) => {
         if (!parsed) return original; // Return original if parsing failed
 
+        // Check if this utterance needs sentence-based chunking
+        const sentenceCount = splitIntoSentences(parsed.text).length;
+        if (sentenceCount > 10) {
+          totalSentenceChunks++;
+          console.log(`    → Splitting utterance with ${sentenceCount} sentences into chunks`);
+        }
+
         // Clean the text content
         const cleanedText = await cleanText(parsed.text);
 
@@ -111,6 +176,10 @@ export async function cleanTranscript(transcript: string): Promise<string> {
     );
 
     cleanedLines.push(...cleanedBatch);
+  }
+
+  if (totalSentenceChunks > 0) {
+    console.log(`  ✂️  Split ${totalSentenceChunks} long utterances into sentence chunks`);
   }
 
   return cleanedLines.join("\n\n");
