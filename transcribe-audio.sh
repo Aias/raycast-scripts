@@ -16,4 +16,4 @@ source ~/.zshrc
 SCRIPT_DIR="${0:a:h}"
 
 # Run the Bun/TypeScript transcriber
-bun "$HOME/Code/scripts/audio-transcriber/index.ts" "$@"
+bun "$SCRIPT_DIR/audio-transcriber/index.ts" "$@"

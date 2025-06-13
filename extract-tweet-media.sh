@@ -22,4 +22,4 @@ source ~/.zshrc
 SCRIPT_DIR="${0:a:h}"
 
 # Run the actual script
-exec "$HOME/Code/scripts/extract-tweet-media/extract-tweet-media.sh" "$@"
+exec "$SCRIPT_DIR/extract-tweet-media/extract-tweet-media.sh" "$@"

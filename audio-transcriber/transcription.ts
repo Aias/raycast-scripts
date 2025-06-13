@@ -3,14 +3,32 @@ import { formatTimestamp } from "./utils.js";
 
 const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
 
+type CustomSpelling = {
+  from: string[];
+  to: string;
+};
+
+const customSpellings: CustomSpelling[] = [
+  { from: ["Jared"], to: "Jarrod" },
+  { from: ["remark"], to: "Remark" },
+];
+
 export async function transcribe(audioPath: string): Promise<Transcript> {
   console.log("🎙️ Transcribing with AssemblyAI...");
   const transcript = await assemblyai.transcripts.transcribe({
+    speech_model: "slam-1",
     audio: audioPath,
     speaker_labels: true,
     format_text: true,
     punctuate: true,
-    disfluencies: false, // Remove filler words like "um", "uh", "like"
+    disfluencies: false,
+    language_code: "en_us",
+    custom_spelling: customSpellings,
+    // entity_detection: true,
+    // summarization: true,
+    // summary_model: "informative",
+    // summary_type: "paragraph",
+    // auto_chapters: true,
   });
 
   // Check for errors
