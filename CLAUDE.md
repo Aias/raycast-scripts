@@ -81,3 +81,12 @@ Each script consists of:
 - Many scripts depend on external APIs or local system state that may not be available in testing environments
 - Scripts are designed for personal productivity use on macOS with Raycast installed
 - The repository follows conventions documented in `AGENTS.md`
+
+## Code Quality Requirements
+
+When working on any script in this repository:
+- **Always run linting, formatting, and type checking** before completing any task
+- **Run type checking regularly** when making changes to TypeScript projects
+- For TypeScript/Bun projects: Run `bun run check` or individually run `bun run typecheck`, `bun run lint`, and `bun run format:check`
+- For TypeScript/Yarn projects: If no type checking script exists in package.json, either add one or run `tsc --noEmit` manually
+- For Python projects: Follow standard formatting conventions

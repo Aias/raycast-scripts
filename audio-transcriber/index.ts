@@ -1,31 +1,14 @@
 #!/usr/bin/env bun
 
-import fs from "node:fs";
-import path from "node:path";
-import { validateEnvironment } from "./utils.js";
+import { parseCommandLineArgs } from "./utils.js";
 import { runFullPipeline } from "./pipeline.js";
 
-// Check for required environment variables
-validateEnvironment();
-
-// Get input path from command line
-const inputPath = path.resolve(process.argv[2] ?? "");
-if (!fs.existsSync(inputPath)) {
-  console.error(`⛔ File not found: ${inputPath}`);
-  process.exit(1);
-}
-
-// Get optional number of speakers from command line
-const speakersArg = process.argv[3];
-const speakersExpected = speakersArg ? parseInt(speakersArg, 10) : undefined;
-if (speakersExpected !== undefined && (isNaN(speakersExpected) || speakersExpected < 1)) {
-  console.error(`⛔ Invalid number of speakers: ${speakersArg}`);
-  process.exit(1);
-}
+// Parse and validate command line arguments
+const args = parseCommandLineArgs();
 
 // Run the full pipeline
 try {
-  await runFullPipeline({ inputPath, speakersExpected });
+  await runFullPipeline(args);
 } catch (error) {
   console.error("Pipeline failed:", error);
   process.exit(1);

@@ -145,7 +145,7 @@ export async function runSummarizationOnly(options: SummarizationOptions): Promi
  */
 export async function runFullPipeline(options: TranscriptionOptions): Promise<void> {
   const { inputPath, speakersExpected } = options;
-  
+
   // Step 1: Transcribe
   const { outputDir, transcriptPath } = await runTranscriptionOnly({
     inputPath,
