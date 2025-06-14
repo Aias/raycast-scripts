@@ -45,34 +45,37 @@ export async function runTranscriptionOnly(options: TranscriptionOptions): Promi
   // Convert audio to WAV
   const wavPath = await convertToWav(inputPath, outputDir);
 
-  // Transcribe
-  const transcript = await transcribe(wavPath, speakersExpected);
+  // Transcribe and get sentences/paragraphs
+  const result = await transcribe(wavPath, speakersExpected);
 
-  // Save raw output to JSON
+  // Save the complete output to JSON
   const jsonPath = path.join(outputDir, "transcript-raw.json");
-  fs.writeFileSync(jsonPath, JSON.stringify(transcript, null, 2));
+  fs.writeFileSync(jsonPath, JSON.stringify(result, null, 2));
   console.log(`✅ Raw transcript saved → ${jsonPath}`);
 
-  return { outputDir, transcript, transcriptPath: jsonPath };
+  return { outputDir, transcript: result.transcript, transcriptPath: jsonPath };
 }
 
-// Create a minimal schema for the Transcript object we need
-// This ensures we have the required fields without type casting
-const TranscriptSchema = z
-  .object({
-    text: z.string().nullable(),
-    utterances: z
-      .array(
-        z.object({
-          start: z.number(),
-          end: z.number(),
-          text: z.string(),
-          speaker: z.string(),
-        }),
-      )
-      .nullable(),
-  })
-  .passthrough(); // Allow additional fields from AssemblyAI
+// Schema for the complete transcription output
+const TranscriptionOutputSchema = z.object({
+  transcript: z
+    .object({
+      text: z.string().nullable(),
+      utterances: z
+        .array(
+          z.object({
+            start: z.number(),
+            end: z.number(),
+            text: z.string(),
+            speaker: z.string(),
+          }),
+        )
+        .nullable(),
+    })
+    .passthrough(), // Allow additional fields from AssemblyAI
+  sentences: z.any(), // We'll refine this once we see the structure
+  paragraphs: z.any(), // We'll refine this once we see the structure
+});
 
 /**
  * Run only the cleaning step on an existing transcript
@@ -95,8 +98,8 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
     try {
       const parsed = JSON.parse(jsonContent) as unknown;
       // Validate the parsed JSON has the required structure
-      const validated = TranscriptSchema.parse(parsed);
-      transcript = validated as Transcript;
+      const validated = TranscriptionOutputSchema.parse(parsed);
+      transcript = validated.transcript as Transcript;
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error("❌ Invalid transcript JSON structure:", error.message);

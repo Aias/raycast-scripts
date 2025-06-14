@@ -3,3 +3,9 @@ node_modules/
 *.transcript.md
 .DS_Store
 *.tsbuildinfo
+
+# Config file (contains personal/sensitive data)
+transcription.config.local.ts
+
+# Audio samples
+samples/
