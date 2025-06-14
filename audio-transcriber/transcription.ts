@@ -1,42 +1,49 @@
-import { AssemblyAI, type Transcript } from "assemblyai";
+import {
+  AssemblyAI,
+  type ParagraphsResponse,
+  type SentencesResponse,
+  type Transcript,
+} from "assemblyai";
 import { formatTimestamp } from "./utils.js";
+import {
+  getCustomSpellings,
+  getKeyTerms,
+  getTranscriptionOptions,
+} from "./transcription.config.loader.js";
 
 const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
 
-type CustomSpelling = {
-  from: string[];
-  to: string;
-};
-
-const customSpellings: CustomSpelling[] = [
-  { from: ["Jared"], to: "Jarrod" },
-  { from: ["remark"], to: "Remark" },
-];
+export interface TranscriptionResult {
+  transcript: Transcript;
+  sentences: SentencesResponse;
+  paragraphs: ParagraphsResponse;
+}
 
 export async function transcribe(
   audioPath: string,
   speakersExpected?: number,
-): Promise<Transcript> {
+): Promise<TranscriptionResult> {
   console.log("🎙️ Transcribing with AssemblyAI...");
   if (speakersExpected) {
     console.log(`   Expected speakers: ${speakersExpected}`);
   }
 
+  // Load config values
+  const [customSpellings, keyTerms, transcriptionOptions] = await Promise.all([
+    getCustomSpellings(),
+    getKeyTerms(),
+    getTranscriptionOptions(),
+  ]);
+
   const transcript = await assemblyai.transcripts.transcribe({
-    speech_model: "slam-1",
+    // Spread the config options first
+    ...transcriptionOptions,
+
+    // Then add the required fields and any overrides
     audio: audioPath,
-    speaker_labels: true,
     speakers_expected: speakersExpected,
-    format_text: true,
-    punctuate: true,
-    disfluencies: false,
-    language_code: "en_us",
     custom_spelling: customSpellings,
-    // entity_detection: true,
-    // summarization: true,
-    // summary_model: "informative",
-    // summary_type: "paragraph",
-    // auto_chapters: true,
+    keyterms_prompt: keyTerms,
   });
 
   // Check for errors
@@ -45,7 +52,24 @@ export async function transcribe(
     throw new Error(transcript.error);
   }
 
-  return transcript;
+  // Fetch sentences and paragraphs
+  console.log("📝 Fetching sentences and paragraphs...");
+  const [sentences, paragraphs] = await Promise.all([
+    getSentences(transcript.id),
+    getParagraphs(transcript.id),
+  ]);
+
+  return { transcript, sentences, paragraphs };
+}
+
+export async function getSentences(transcriptId: string) {
+  const sentences = await assemblyai.transcripts.sentences(transcriptId);
+  return sentences;
+}
+
+export async function getParagraphs(transcriptId: string) {
+  const paragraphs = await assemblyai.transcripts.paragraphs(transcriptId);
+  return paragraphs;
 }
 
 export function formatTranscript(transcript: Transcript): string {

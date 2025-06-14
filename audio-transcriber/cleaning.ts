@@ -1,12 +1,8 @@
 import OpenAI from "openai";
+import type { Transcript } from "assemblyai";
+import { formatTimestamp } from "./utils.js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-
-interface TranscriptLine {
-  timestamp: string;
-  speaker: string;
-  text: string;
-}
 
 const makeCleaningPrompt = (
   text: string,
@@ -38,18 +34,6 @@ Transcript to clean:
 ${text}
 \`\`\``;
 
-export function parseTranscriptLine(line: string): TranscriptLine | null {
-  // Match pattern: [timestamp] **Speaker X**: text
-  const match = line.match(/^\[([^\]]+)\]\s*\*\*Speaker\s*([^*]+)\*\*:\s*(.*)$/);
-  if (!match) return null;
-
-  return {
-    timestamp: match[1],
-    speaker: match[2],
-    text: match[3],
-  };
-}
-
 function splitIntoSentences(text: string): string[] {
   // Split by sentence endings, but keep the punctuation with the sentence
   const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
@@ -68,16 +52,21 @@ function chunkBySentenceCount(sentences: string[], maxSentences: number = 10): s
 }
 
 async function cleanText(text: string): Promise<string> {
+  console.log(`    Cleaning text of length: ${text.length}`);
+
   // Split into sentences and chunk if needed
   const sentences = splitIntoSentences(text);
+  console.log(`    Found ${sentences.length} sentences`);
 
   // If the text has more than 10 sentences, process in chunks
   if (sentences.length > 10) {
+    console.log(`    Text has ${sentences.length} sentences, will process in chunks`);
     const chunks = chunkBySentenceCount(sentences, 10);
     const cleanedChunks: string[] = [];
 
     for (const chunk of chunks) {
       try {
+        console.log(`      Calling OpenAI API for chunk...`);
         const response = await openai.chat.completions.create({
           model: "gpt-4.1-mini",
           temperature: 0.1,
@@ -90,6 +79,7 @@ async function cleanText(text: string): Promise<string> {
         });
 
         const cleaned = response.choices[0].message.content?.trim() ?? chunk;
+        console.log(`      API returned ${cleaned.length} characters`);
         // Remove any backticks that might be in the response
         const cleanedChunk = cleaned
           .replace(/^```\n?/, "")
@@ -132,46 +122,45 @@ async function cleanText(text: string): Promise<string> {
   }
 }
 
-export async function cleanTranscript(transcript: string): Promise<string> {
+export async function cleanTranscript(transcript: Transcript): Promise<string> {
   console.log("🧹 Cleaning transcript with AI...");
 
-  // Split transcript into lines
-  const lines = transcript.split("\n\n").filter((line) => line.trim());
+  // Check if we have utterances to work with
+  if (!transcript.utterances || transcript.utterances.length === 0) {
+    console.log("  No utterances found in transcript");
+    return transcript.text || "No transcript available";
+  }
 
-  // Parse lines into structured data
-  const parsedLines = lines.map((line) => ({
-    original: line,
-    parsed: parseTranscriptLine(line),
-  }));
+  console.log(`  Found ${transcript.utterances.length} utterances to clean`);
 
   // Process in batches for parallel execution
   const BATCH_SIZE = 20;
   const cleanedLines: string[] = [];
   let totalSentenceChunks = 0;
 
-  for (let i = 0; i < parsedLines.length; i += BATCH_SIZE) {
-    const batch = parsedLines.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < transcript.utterances.length; i += BATCH_SIZE) {
+    const batch = transcript.utterances.slice(i, i + BATCH_SIZE);
     console.log(
-      `  Cleaning batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(parsedLines.length / BATCH_SIZE)}...`,
+      `  Cleaning batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(transcript.utterances.length / BATCH_SIZE)}...`,
     );
 
     // Process batch in parallel
     const cleanedBatch = await Promise.all(
-      batch.map(async ({ original, parsed }) => {
-        if (!parsed) return original; // Return original if parsing failed
+      batch.map(async (utterance) => {
+        console.log(`    Processing utterance from Speaker ${utterance.speaker}`);
 
         // Check if this utterance needs sentence-based chunking
-        const sentenceCount = splitIntoSentences(parsed.text).length;
+        const sentenceCount = splitIntoSentences(utterance.text).length;
         if (sentenceCount > 10) {
           totalSentenceChunks++;
           console.log(`    → Splitting utterance with ${sentenceCount} sentences into chunks`);
         }
 
         // Clean the text content
-        const cleanedText = await cleanText(parsed.text);
+        const cleanedText = await cleanText(utterance.text);
 
-        // Reassemble the line with original metadata
-        return `[${parsed.timestamp}] **Speaker ${parsed.speaker}**: ${cleanedText}`;
+        // Format the cleaned utterance
+        return `[${formatTimestamp(utterance.start)}] **Speaker ${utterance.speaker}**: ${cleanedText}`;
       }),
     );
 
