@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import type { Transcript } from 'assemblyai';
 import { formatTimestamp } from './utils.js';
+import { type TranscriptionResult } from './transcription.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
@@ -122,8 +122,9 @@ async function cleanText(text: string): Promise<string> {
 	}
 }
 
-export async function cleanTranscript(transcript: Transcript): Promise<string> {
+export async function cleanTranscript(transcriptionResult: TranscriptionResult): Promise<string> {
 	console.log('🧹 Cleaning transcript with AI...');
+	const transcript = transcriptionResult.transcript;
 
 	// Check if we have utterances to work with
 	if (!transcript.utterances || transcript.utterances.length === 0) {

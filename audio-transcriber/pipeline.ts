@@ -1,10 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Transcript } from 'assemblyai';
 import { z } from 'zod';
 import { createOutputFolder } from './utils.js';
 import { convertToWav } from './audio.js';
-import { transcribe } from './transcription.js';
+import { transcribe, type TranscriptionResult } from './transcription.js';
 import { chunkBySpeaker, summarizeChunks } from './summarization.js';
 import { cleanTranscript } from './cleaning.js';
 import { renameOutputFolder, getOutputFilenames } from './naming.js';
@@ -18,7 +17,7 @@ export interface TranscriptionOptions {
 export interface CleaningOptions {
 	transcriptPath: string;
 	outputPath?: string;
-	transcriptData?: Transcript;
+	transcriptData?: TranscriptionResult;
 }
 
 export interface SummarizationOptions {
@@ -33,7 +32,7 @@ export interface SummarizationOptions {
  */
 export async function runTranscriptionOnly(options: TranscriptionOptions): Promise<{
 	outputDir: string;
-	transcript: Transcript;
+	transcriptionOutput: TranscriptionResult;
 	transcriptPath: string;
 }> {
 	const { inputPath, speakersExpected } = options;
@@ -53,28 +52,14 @@ export async function runTranscriptionOnly(options: TranscriptionOptions): Promi
 	fs.writeFileSync(jsonPath, JSON.stringify(result, null, 2));
 	console.log(`✅ Raw transcript saved → ${jsonPath}`);
 
-	return { outputDir, transcript: result.transcript, transcriptPath: jsonPath };
+	return { outputDir, transcriptionOutput: result, transcriptPath: jsonPath };
 }
 
 // Schema for the complete transcription output
-const TranscriptionOutputSchema = z.object({
-	transcript: z
-		.object({
-			text: z.string().nullable(),
-			utterances: z
-				.array(
-					z.object({
-						start: z.number(),
-						end: z.number(),
-						text: z.string(),
-						speaker: z.string(),
-					}),
-				)
-				.nullable(),
-		})
-		.passthrough(), // Allow additional fields from AssemblyAI
-	sentences: z.any(), // We'll refine this once we see the structure
-	paragraphs: z.any(), // We'll refine this once we see the structure
+const TranscriptionResultSchema = z.object({
+	transcript: z.any(),
+	sentences: z.any(),
+	paragraphs: z.any(),
 });
 
 /**
@@ -85,11 +70,11 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
 	cleanedText: string;
 }> {
 	const { transcriptPath } = options;
-	let transcript: Transcript;
+	let transcriptionOutput: TranscriptionResult;
 
 	// Check if we have transcript data provided or need to load it
 	if (options.transcriptData) {
-		transcript = options.transcriptData;
+		transcriptionOutput = options.transcriptData;
 	} else {
 		// Load transcript from JSON file
 		console.log(`📖 Reading transcript JSON from ${transcriptPath}...`);
@@ -98,8 +83,8 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
 		try {
 			const parsed = JSON.parse(jsonContent) as unknown;
 			// Validate the parsed JSON has the required structure
-			const validated = TranscriptionOutputSchema.parse(parsed);
-			transcript = validated.transcript as Transcript;
+			const validated = TranscriptionResultSchema.parse(parsed);
+			transcriptionOutput = validated as TranscriptionResult; // We're trusting our own output schema here.
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				console.error('❌ Invalid transcript JSON structure:', error.message);
@@ -110,7 +95,7 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
 	}
 
 	// Clean transcript
-	const cleanedText = await cleanTranscript(transcript);
+	const cleanedText = await cleanTranscript(transcriptionOutput);
 
 	// Determine output path
 	const outputPath = options.outputPath || transcriptPath.replace(/\.json$/, '-cleaned.md');
@@ -183,7 +168,7 @@ export async function runFullPipeline(options: TranscriptionOptions): Promise<vo
 	const { inputPath, speakersExpected } = options;
 
 	// Step 1: Transcribe
-	const { outputDir, transcript, transcriptPath } = await runTranscriptionOnly({
+	const { outputDir, transcriptionOutput, transcriptPath } = await runTranscriptionOnly({
 		inputPath,
 		speakersExpected,
 	});
@@ -191,7 +176,7 @@ export async function runFullPipeline(options: TranscriptionOptions): Promise<vo
 	// Step 2: Clean
 	const { cleanedPath, cleanedText } = await runCleaningOnly({
 		transcriptPath,
-		transcriptData: transcript,
+		transcriptData: transcriptionOutput,
 	});
 
 	// Step 3: Summarize with folder renaming
