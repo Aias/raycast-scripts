@@ -7,6 +7,9 @@
   "scripts": {
     "start": "bun run index.ts",
     "dev": "bun run --watch index.ts",
+    "transcribe": "bun run transcribe-only.ts",
+    "clean": "bun run clean-transcript.ts",
+    "summarize": "bun run summarize-only.ts",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write \"**/*.{ts,json,md}\"",

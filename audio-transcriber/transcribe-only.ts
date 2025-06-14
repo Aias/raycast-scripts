@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateEnvironment } from "./utils.js";
-import { runFullPipeline } from "./pipeline.js";
+import { runTranscriptionOnly } from "./pipeline.js";
 
 // Check for required environment variables
 validateEnvironment();
@@ -23,10 +23,18 @@ if (speakersExpected !== undefined && (isNaN(speakersExpected) || speakersExpect
   process.exit(1);
 }
 
-// Run the full pipeline
+// Run transcription only
 try {
-  await runFullPipeline({ inputPath, speakersExpected });
+  console.log("🎙️ Starting transcription-only pipeline...");
+  const { outputDir, transcriptPath } = await runTranscriptionOnly({
+    inputPath,
+    speakersExpected,
+  });
+
+  console.log("\n✅ Transcription complete!");
+  console.log(`📁 Output folder: ${outputDir}`);
+  console.log(`📄 Transcript: ${transcriptPath}`);
 } catch (error) {
-  console.error("Pipeline failed:", error);
+  console.error("Transcription failed:", error);
   process.exit(1);
 }

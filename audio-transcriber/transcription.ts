@@ -1,6 +1,8 @@
 import { AssemblyAI, type Transcript } from "assemblyai";
 import { formatTimestamp } from "./utils.js";
 
+export type { Transcript };
+
 const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
 
 type CustomSpelling = {

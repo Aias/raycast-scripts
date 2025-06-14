@@ -40,8 +40,11 @@ ${text}
 
 export function parseTranscriptLine(line: string): TranscriptLine | null {
   // Match pattern: [timestamp] **Speaker X**: text
-  const match = line.match(/^\[([^\]]+)\]\s*\*\*Speaker\s*([^*]+)\*\*:\s*(.*)$/);
-  if (!match) return null;
+  const match = line.match(/^\[([^\]]+)\]\s*\*\*Speaker\s*([^*]+)\*\*:\s*(.*)$/s);
+  if (!match) {
+    console.log(`    Parse failed for line starting with: ${line.substring(0, 50)}...`);
+    return null;
+  }
 
   return {
     timestamp: match[1],
@@ -68,16 +71,21 @@ function chunkBySentenceCount(sentences: string[], maxSentences: number = 10): s
 }
 
 async function cleanText(text: string): Promise<string> {
+  console.log(`    Cleaning text of length: ${text.length}`);
+
   // Split into sentences and chunk if needed
   const sentences = splitIntoSentences(text);
+  console.log(`    Found ${sentences.length} sentences`);
 
   // If the text has more than 10 sentences, process in chunks
   if (sentences.length > 10) {
+    console.log(`    Text has ${sentences.length} sentences, will process in chunks`);
     const chunks = chunkBySentenceCount(sentences, 10);
     const cleanedChunks: string[] = [];
 
     for (const chunk of chunks) {
       try {
+        console.log(`      Calling OpenAI API for chunk...`);
         const response = await openai.chat.completions.create({
           model: "gpt-4.1-mini",
           temperature: 0.1,
@@ -90,6 +98,7 @@ async function cleanText(text: string): Promise<string> {
         });
 
         const cleaned = response.choices[0].message.content?.trim() ?? chunk;
+        console.log(`      API returned ${cleaned.length} characters`);
         // Remove any backticks that might be in the response
         const cleanedChunk = cleaned
           .replace(/^```\n?/, "")
@@ -134,9 +143,11 @@ async function cleanText(text: string): Promise<string> {
 
 export async function cleanTranscript(transcript: string): Promise<string> {
   console.log("🧹 Cleaning transcript with AI...");
+  console.log(`  Input transcript length: ${transcript.length} characters`);
 
   // Split transcript into lines
   const lines = transcript.split("\n\n").filter((line) => line.trim());
+  console.log(`  Found ${lines.length} utterances to clean`);
 
   // Parse lines into structured data
   const parsedLines = lines.map((line) => ({
@@ -158,7 +169,12 @@ export async function cleanTranscript(transcript: string): Promise<string> {
     // Process batch in parallel
     const cleanedBatch = await Promise.all(
       batch.map(async ({ original, parsed }) => {
-        if (!parsed) return original; // Return original if parsing failed
+        if (!parsed) {
+          console.log(`    Failed to parse line: ${original.substring(0, 100)}...`);
+          return original; // Return original if parsing failed
+        }
+
+        console.log(`    Processing utterance from Speaker ${parsed.speaker}`);
 
         // Check if this utterance needs sentence-based chunking
         const sentenceCount = splitIntoSentences(parsed.text).length;
