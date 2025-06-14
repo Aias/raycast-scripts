@@ -2,7 +2,7 @@
 // This file provides the base configuration that is always loaded.
 // Users can extend this by creating a transcription.config.local.ts file.
 
-import type { TranscriptionConfig } from "./transcription.config.types.js";
+import type { TranscriptionConfig } from './transcription.config.types.js';
 
 /**
  * Default configuration with sensible defaults for AssemblyAI transcription.
@@ -46,27 +46,27 @@ import type { TranscriptionConfig } from "./transcription.config.types.js";
  * };
  */
 export const defaultConfig: TranscriptionConfig = {
-  customSpellings: [],
-  keyTerms: [],
+	customSpellings: [],
+	keyTerms: [],
 
-  // Default transcription options
-  transcriptionOptions: {
-    // Model and language
-    speech_model: "slam-1", // Options: "slam-1" (best quality), "conformer-2", "nano" (fastest)
-    language_code: "en_us",
+	// Default transcription options
+	transcriptionOptions: {
+		// Model and language
+		speech_model: 'slam-1', // Options: "slam-1" (best quality), "conformer-2", "nano" (fastest)
+		language_code: 'en_us',
 
-    // Feature toggles - these are the recommended defaults
-    speaker_labels: true, // Identify different speakers
-    format_text: true, // Format text with proper capitalization and punctuation
-    punctuate: true, // Must be true if speaker_labels is true
-    disfluencies: false, // Remove "um", "uh" etc. (Note: slam-1 doesn't support this)
-    entity_detection: true, // Detect entities like names, locations, etc.
-    auto_chapters: true, // Automatically create chapters
-    auto_highlights: true, // Automatically highlight important sections
+		// Feature toggles - these are the recommended defaults
+		speaker_labels: true, // Identify different speakers
+		format_text: true, // Format text with proper capitalization and punctuation
+		punctuate: true, // Must be true if speaker_labels is true
+		disfluencies: false, // Remove "um", "uh" etc. (Note: slam-1 doesn't support this)
+		entity_detection: true, // Detect entities like names, locations, etc.
+		auto_chapters: true, // Automatically create chapters
+		auto_highlights: true, // Automatically highlight important sections
 
-    // Summarization (disabled by default as it conflicts with auto_chapters)
-    summarization: false,
-    // summary_model: "informative",
-    // summary_type: "paragraph",
-  },
+		// Summarization (disabled by default as it conflicts with auto_chapters)
+		summarization: false,
+		// summary_model: "informative",
+		// summary_type: "paragraph",
+	},
 };
