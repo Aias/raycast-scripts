@@ -100,11 +100,11 @@ export function parseTranscriptArgs(): { transcriptPath: string } {
   // Validate environment first
   validateEnvironment();
 
-  // Parse transcript path (required, must be markdown)
+  // Parse transcript path (required, must be JSON)
   const transcriptPath = parseAndValidateFile(
     process.argv[2],
-    "⛔ Please provide a transcript file path",
-    [".md"],
+    "⛔ Please provide a transcript JSON file path",
+    [".json"],
   );
 
   return { transcriptPath };

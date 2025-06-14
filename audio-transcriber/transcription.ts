@@ -1,19 +1,8 @@
 import { AssemblyAI, type Transcript } from "assemblyai";
 import { formatTimestamp } from "./utils.js";
-
-export type { Transcript };
+import { customSpellings, keyTerms } from "./transcription.config.js";
 
 const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
-
-type CustomSpelling = {
-  from: string[];
-  to: string;
-};
-
-const customSpellings: CustomSpelling[] = [
-  { from: ["Jared"], to: "Jarrod" },
-  { from: ["remark"], to: "Remark" },
-];
 
 export async function transcribe(
   audioPath: string,
@@ -25,20 +14,22 @@ export async function transcribe(
   }
 
   const transcript = await assemblyai.transcripts.transcribe({
-    speech_model: "slam-1",
     audio: audioPath,
+    speech_model: "slam-1",
     speaker_labels: true,
     speakers_expected: speakersExpected,
     format_text: true,
-    punctuate: true,
-    disfluencies: false,
+    punctuate: true, // Must be true if speaker_labels is true
+    disfluencies: false, // Slam-1 doesn't support disfluencies
     language_code: "en_us",
     custom_spelling: customSpellings,
-    // entity_detection: true,
-    // summarization: true,
+    keyterms_prompt: keyTerms,
+    entity_detection: true,
+    // summarization: true, // Only summarization or auto_chapters can be true, not both
     // summary_model: "informative",
     // summary_type: "paragraph",
-    // auto_chapters: true,
+    auto_chapters: true,
+    auto_highlights: true,
   });
 
   // Check for errors

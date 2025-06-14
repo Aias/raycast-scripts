@@ -8,7 +8,7 @@ const { transcriptPath } = parseTranscriptArgs();
 
 // Run cleaning only
 try {
-  console.log("🧹 Starting transcript cleaning...");
+  console.log(`🧹 Starting transcript cleaning from JSON file...`);
   const { cleanedPath } = await runCleaningOnly({
     transcriptPath,
   });
