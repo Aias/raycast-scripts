@@ -7,6 +7,7 @@
 
 # Optional parameters:
 # @raycast.icon 🕷️
+# @raycast.argument1 { "type": "text", "placeholder": "Starting URL" }
 
 # Documentation:
 # @raycast.description Web crawler utility using crawl4ai
