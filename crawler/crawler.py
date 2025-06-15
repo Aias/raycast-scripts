@@ -1,12 +1,27 @@
 import os
 import json
 from urllib.parse import urljoin
+import argparse
 from crawl4ai import WebCrawler
 from crawl4ai.extraction_strategy import LLMExtractionStrategy, NoExtractionStrategy
 
-# Add flags to control link following and extraction strategy
-FOLLOW_INTERNAL_LINKS = True
-USE_EXTRACTION_STRATEGY = False
+parser = argparse.ArgumentParser(description="crawl a page using crawl4ai")
+parser.add_argument("url", help="starting URL to crawl")
+parser.add_argument(
+    "--follow-internal",
+    action="store_true",
+    help="follow internal links from the starting page",
+)
+parser.add_argument(
+    "--extract",
+    action="store_true",
+    help="use the LLM extraction strategy",
+)
+
+args = parser.parse_args()
+
+FOLLOW_INTERNAL_LINKS = args.follow_internal
+USE_EXTRACTION_STRATEGY = args.extract
 
 def create_crawler():
     crawler = WebCrawler(verbose=True)
@@ -15,7 +30,7 @@ def create_crawler():
 
 crawler = create_crawler()
 
-url = "https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/tmt88vi.html"
+url = args.url
 
 def process_and_save_content(url, content):
     filename = f"output/{url.replace('https://', '').replace('/', '_')}.md"
