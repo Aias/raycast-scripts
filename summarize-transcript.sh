@@ -9,11 +9,12 @@
 # @raycast.author Nick Trombley
 # @raycast.description Summarize an existing transcript using OpenAI
 
-# Load zsh environment (includes environment variables)
-source ~/.zshrc
+# Load shell configuration (includes environment variables)
+source "$(dirname "$0")/scripts/common.sh"
+load_shell_config
 
 # Get the directory where this script is located
-SCRIPT_DIR="${0:a:h}"
+set_script_dir "$0"
 
 # Run the Bun/TypeScript summarizer
 bun "$SCRIPT_DIR/audio-transcriber/summarize-only.ts" "$@"

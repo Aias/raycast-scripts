@@ -13,11 +13,12 @@
 # @raycast.author Nick Trombley
 # @raycast.authorURL https://github.com/Aias
 
-# Load zsh environment
-source ~/.zshrc
+# Load shell configuration
+source "$(dirname "$0")/scripts/common.sh"
+load_shell_config
 
 # Get the directory where this script is located
-SCRIPT_DIR="${0:a:h}"
+set_script_dir "$0"
 
 # Run the actual script
 exec "$SCRIPT_DIR/finder-to-ghostty/finder-to-ghostty.sh" "$@"

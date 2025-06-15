@@ -15,11 +15,12 @@
 # @raycast.author Nick Trombley
 # @raycast.authorURL https://github.com/Aias
 
-# Load zsh environment (includes homebrew, python, etc)
-source ~/.zshrc
+# Load shell configuration (includes homebrew, python, etc)
+source "$(dirname "$0")/scripts/common.sh"
+load_shell_config
 
 # Get the directory where this script is located
-SCRIPT_DIR="${0:a:h}"
+set_script_dir "$0"
 
 # Run the actual script
 exec "$SCRIPT_DIR/extract-tweet-media/extract-tweet-media.sh" "$@"
