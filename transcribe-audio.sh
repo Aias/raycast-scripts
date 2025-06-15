@@ -10,11 +10,12 @@
 # @raycast.author Nick Trombley
 # @raycast.description Transcribe and summarize audio files using Deepgram and OpenAI
 
-# Load zsh environment (includes environment variables)
-source ~/.zshrc
+# Load shell configuration (includes environment variables)
+source "$(dirname "$0")/scripts/common.sh"
+load_shell_config
 
 # Get the directory where this script is located
-SCRIPT_DIR="${0:a:h}"
+set_script_dir "$0"
 
 # Run the Bun/TypeScript transcriber
 bun "$SCRIPT_DIR/audio-transcriber/index.ts" "$@"

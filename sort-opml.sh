@@ -14,11 +14,12 @@
 # @raycast.author Nick Trombley
 # @raycast.authorURL https://github.com/Aias
 
-# Load zsh environment
-source ~/.zshrc
+# Load shell configuration
+source "$(dirname "$0")/scripts/common.sh"
+load_shell_config
 
 # Get the directory where this script is located
-SCRIPT_DIR="${0:a:h}"
+set_script_dir "$0"
 
 # Run the Python script using uv
 cd "$SCRIPT_DIR/sort_opml" && uv run python sort_opml.py "$@"
