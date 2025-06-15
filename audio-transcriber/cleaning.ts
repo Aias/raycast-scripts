@@ -1,12 +1,20 @@
 import OpenAI from 'openai';
 import { formatTimestamp } from './utils.js';
 import { type TranscriptionResult } from './transcription.js';
+import { getCustomSpellings, getKeyTerms } from './transcription.config.loader.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 const makeCleaningPrompt = (
 	text: string,
+	context: string,
+	vocabulary: string[],
 ) => `You are a professional transcription editor. Make only the minimum changes needed for clarity and correctness.
+
+The conversation context may help resolve uncertain words:
+${context}
+
+Important words and names to preserve exactly: ${vocabulary.join(', ')}
 
 Rules — follow every item:
 
@@ -34,70 +42,53 @@ Transcript to clean:
 ${text}
 \`\`\``;
 
-function splitIntoSentences(text: string): string[] {
-	// Split by sentence endings, but keep the punctuation with the sentence
-	const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-	return sentences.map((s) => s.trim());
+interface SentenceGroup {
+	speaker: string;
+	start: number;
+	text: string;
 }
 
-function chunkBySentenceCount(sentences: string[], maxSentences: number = 10): string[] {
-	const chunks: string[] = [];
+function groupSentences(
+	sentences: { speaker: string | null; start: number; text: string }[],
+	maxSentences = 10,
+): SentenceGroup[] {
+	const groups: SentenceGroup[] = [];
+	if (sentences.length === 0) return groups;
 
-	for (let i = 0; i < sentences.length; i += maxSentences) {
-		const chunk = sentences.slice(i, i + maxSentences).join(' ');
-		chunks.push(chunk);
-	}
+	let currentSpeaker = sentences[0].speaker ?? 'A';
+	let start = sentences[0].start;
+	let chunk: string[] = [];
 
-	return chunks;
-}
+	for (const sentence of sentences) {
+		const speaker = sentence.speaker ?? currentSpeaker;
 
-async function cleanText(text: string): Promise<string> {
-	console.log(`    Cleaning text of length: ${text.length}`);
-
-	// Split into sentences and chunk if needed
-	const sentences = splitIntoSentences(text);
-	console.log(`    Found ${sentences.length} sentences`);
-
-	// If the text has more than 10 sentences, process in chunks
-	if (sentences.length > 10) {
-		console.log(`    Text has ${sentences.length} sentences, will process in chunks`);
-		const chunks = chunkBySentenceCount(sentences, 10);
-		const cleanedChunks: string[] = [];
-
-		for (const chunk of chunks) {
-			try {
-				console.log(`      Calling OpenAI API for chunk...`);
-				const response = await openai.chat.completions.create({
-					model: 'gpt-4.1-mini',
-					temperature: 0.1,
-					messages: [
-						{
-							role: 'user',
-							content: makeCleaningPrompt(chunk),
-						},
-					],
-				});
-
-				const cleaned = response.choices[0].message.content?.trim() ?? chunk;
-				console.log(`      API returned ${cleaned.length} characters`);
-				// Remove any backticks that might be in the response
-				const cleanedChunk = cleaned
-					.replace(/^```\n?/, '')
-					.replace(/\n?```$/, '')
-					.trim();
-
-				cleanedChunks.push(cleanedChunk);
-			} catch (error) {
-				console.error('Error cleaning chunk:', error);
-				cleanedChunks.push(chunk); // Return original chunk if cleaning fails
+		if (speaker !== currentSpeaker || chunk.length >= maxSentences) {
+			if (chunk.length > 0) {
+				groups.push({ speaker: currentSpeaker, start, text: chunk.join(' ') });
 			}
+			currentSpeaker = speaker;
+			start = sentence.start;
+			chunk = [];
 		}
 
-		// Join chunks with a space
-		return cleanedChunks.join(' ');
+		chunk.push(sentence.text.trim());
+
+		if (chunk.length >= maxSentences) {
+			groups.push({ speaker: currentSpeaker, start, text: chunk.join(' ') });
+			start = sentence.start;
+			chunk = [];
+		}
 	}
 
-	// For shorter texts, process as before
+	if (chunk.length > 0) {
+		groups.push({ speaker: currentSpeaker, start, text: chunk.join(' ') });
+	}
+
+	return groups;
+}
+
+async function cleanText(text: string, context: string, vocabulary: string[]): Promise<string> {
+	console.log(`    Cleaning text of length: ${text.length}`);
 	try {
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4.1-mini',
@@ -105,13 +96,12 @@ async function cleanText(text: string): Promise<string> {
 			messages: [
 				{
 					role: 'user',
-					content: makeCleaningPrompt(text),
+					content: makeCleaningPrompt(text, context, vocabulary),
 				},
 			],
 		});
 
 		const cleaned = response.choices[0].message.content?.trim() ?? text;
-		// Remove any backticks that might be in the response
 		return cleaned
 			.replace(/^```\n?/, '')
 			.replace(/\n?```$/, '')
@@ -125,51 +115,41 @@ async function cleanText(text: string): Promise<string> {
 export async function cleanTranscript(transcriptionResult: TranscriptionResult): Promise<string> {
 	console.log('🧹 Cleaning transcript with AI...');
 	const transcript = transcriptionResult.transcript;
+	const sentences = transcriptionResult.sentences?.sentences;
 
-	// Check if we have utterances to work with
-	if (!transcript.utterances || transcript.utterances.length === 0) {
-		console.log('  No utterances found in transcript');
+	if (!sentences || sentences.length === 0) {
+		console.log('  No sentence data found');
 		return transcript.text || 'No transcript available';
 	}
 
-	console.log(`  Found ${transcript.utterances.length} utterances to clean`);
+	console.log(`  Found ${sentences.length} sentences to clean`);
 
-	// Process in batches for parallel execution
-	const BATCH_SIZE = 20;
-	const cleanedLines: string[] = [];
-	let totalSentenceChunks = 0;
+	const [customSpellings, keyTerms] = await Promise.all([getCustomSpellings(), getKeyTerms()]);
 
-	for (let i = 0; i < transcript.utterances.length; i += BATCH_SIZE) {
-		const batch = transcript.utterances.slice(i, i + BATCH_SIZE);
-		console.log(
-			`  Cleaning batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(transcript.utterances.length / BATCH_SIZE)}...`,
-		);
-
-		// Process batch in parallel
-		const cleanedBatch = await Promise.all(
-			batch.map(async (utterance) => {
-				console.log(`    Processing utterance from Speaker ${utterance.speaker}`);
-
-				// Check if this utterance needs sentence-based chunking
-				const sentenceCount = splitIntoSentences(utterance.text).length;
-				if (sentenceCount > 10) {
-					totalSentenceChunks++;
-					console.log(`    → Splitting utterance with ${sentenceCount} sentences into chunks`);
-				}
-
-				// Clean the text content
-				const cleanedText = await cleanText(utterance.text);
-
-				// Format the cleaned utterance
-				return `[${formatTimestamp(utterance.start)}] **Speaker ${utterance.speaker}**: ${cleanedText}`;
-			}),
-		);
-
-		cleanedLines.push(...cleanedBatch);
+	const vocabularySet = new Set<string>();
+	for (const s of customSpellings) {
+		vocabularySet.add(s.to);
+		s.from.forEach((w) => vocabularySet.add(w));
 	}
+	keyTerms.forEach((t) => vocabularySet.add(t));
+	const vocabulary = Array.from(vocabularySet);
 
-	if (totalSentenceChunks > 0) {
-		console.log(`  ✂️  Split ${totalSentenceChunks} long utterances into sentence chunks`);
+	const groups = groupSentences(sentences, 10);
+	console.log(`  Created ${groups.length} groups for cleaning`);
+
+	const cleanedLines: string[] = [];
+
+	for (let i = 0; i < groups.length; i++) {
+		const group = groups[i];
+		const contextGroups = groups
+			.slice(Math.max(0, i - 2), i)
+			.map((g) => `Speaker ${g.speaker}: ${g.text}`)
+			.join('\n');
+
+		const cleanedText = await cleanText(group.text, contextGroups, vocabulary);
+		cleanedLines.push(
+			`[${formatTimestamp(group.start)}] **Speaker ${group.speaker}**: ${cleanedText}`,
+		);
 	}
 
 	return cleanedLines.join('\n\n');

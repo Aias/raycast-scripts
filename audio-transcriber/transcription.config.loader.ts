@@ -5,9 +5,12 @@ import { defaultConfig } from './transcription.config.defaults.js';
 
 async function loadLocalConfig(): Promise<TranscriptionConfig | null> {
 	try {
-		// Try to dynamically import the local config file
-		const localConfig = await import('./transcription.config.local.js');
-		return localConfig.default || localConfig;
+		// Dynamically import the optional local config file
+		const localPath = './transcription.config.local.js';
+		const mod = (await import(localPath).catch(() => null)) as unknown;
+		if (!mod) return null;
+		const cfg = (mod as { default?: TranscriptionConfig }).default ?? mod;
+		return cfg as TranscriptionConfig;
 	} catch {
 		// If the file doesn't exist or has errors, that's OK
 		// We'll just use defaults
