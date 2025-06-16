@@ -20,3 +20,21 @@ set_script_dir() {
     SCRIPT_DIR="$(dirname "$(realpath "$script_path")")"
 }
 
+# Get the currently selected file(s) in Finder
+# Returns the paths of selected files, one per line
+# If no files are selected, returns empty
+get_finder_selection() {
+    osascript -e 'tell application "Finder"
+        set selectedItems to selection
+        if (count of selectedItems) > 0 then
+            set pathList to ""
+            repeat with anItem in selectedItems
+                set pathList to pathList & POSIX path of (anItem as alias) & linefeed
+            end repeat
+            return text 1 thru -2 of pathList
+        else
+            return ""
+        end if
+    end tell' 2>/dev/null
+}
+
