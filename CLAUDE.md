@@ -90,3 +90,16 @@ When working on any script in this repository:
 - For TypeScript/Bun projects: Run `bun run check` or individually run `bun run typecheck`, `bun run lint`, and `bun run format:check`
 - For TypeScript/Yarn projects: If no type checking script exists in package.json, either add one or run `tsc --noEmit` manually
 - For Python projects: Follow standard formatting conventions
+
+### TypeScript/Bun/Node.js Standards
+
+For all TypeScript and JavaScript projects using ESLint:
+- **Always use the latest versions** of ESLint, TypeScript, and Prettier
+- **Use ESLint v9+** with the new flat config format (`eslint.config.js`)
+- **Follow the conventions from `@slack-to-markdown/` and `@audio-transcriber/`** as baseline:
+  - ESLint flat config with TypeScript support
+  - Prettier with tabs (not spaces), single quotes, trailing commas
+  - Strict TypeScript configuration
+  - Consistent script naming in package.json: `lint`, `lint:check`, `format`, `format:check`, `typecheck`, `check`
+  - `.prettierignore` for excluding generated files
+  - Type imports should use `import type` syntax
