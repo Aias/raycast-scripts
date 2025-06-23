@@ -21,4 +21,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the TypeScript script
-cd "$SCRIPT_DIR/clipboard-to-markdown" && yarn start
+cd "$SCRIPT_DIR/packages/clipboard-to-markdown" && yarn start

@@ -21,4 +21,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the actual script
-exec "$SCRIPT_DIR/finder-to-ghostty/finder-to-ghostty.sh" "$@"
+exec "$SCRIPT_DIR/scripts/shell/finder-to-ghostty/finder-to-ghostty.sh" "$@"

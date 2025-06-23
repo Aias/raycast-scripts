@@ -17,7 +17,7 @@
 set -e  # Exit on error
 
 script_dir="$(dirname "$0")"
-cd "$script_dir/slack-to-markdown" || exit 1
+cd "$script_dir/packages/slack-to-markdown" || exit 1
 
 # Get clipboard content and convert it
 clipboard_content=$(pbpaste)

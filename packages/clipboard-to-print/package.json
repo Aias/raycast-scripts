@@ -1,0 +1,15 @@
+{
+	"name": "clipboard-to-print",
+	"type": "module",
+	"main": "clipboard-to-print.js",
+	"scripts": {
+		"start": "node clipboard-to-print.js"
+	},
+	"dependencies": {
+		"clipboardy": "^4.0.0",
+		"markdown-pdf": "^11.0.0"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

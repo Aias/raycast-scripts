@@ -29,11 +29,11 @@ if [ -z "$1" ]; then
     
     # Run with the Finder-selected file
     if [ -n "$2" ]; then
-        bun "$SCRIPT_DIR/audio-transcriber/index.ts" "$file_path" "$2"
+        bun "$SCRIPT_DIR/packages/audio-transcriber/index.ts" "$file_path" "$2"
     else
-        bun "$SCRIPT_DIR/audio-transcriber/index.ts" "$file_path"
+        bun "$SCRIPT_DIR/packages/audio-transcriber/index.ts" "$file_path"
     fi
 else
     # Run with provided arguments
-    bun "$SCRIPT_DIR/audio-transcriber/index.ts" "$@"
+    bun "$SCRIPT_DIR/packages/audio-transcriber/index.ts" "$@"
 fi

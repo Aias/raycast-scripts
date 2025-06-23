@@ -22,4 +22,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the Node.js script
-cd "$SCRIPT_DIR/clipboard-to-pdf" && node clipboard-to-pdf.js "$@"
+cd "$SCRIPT_DIR/packages/clipboard-to-pdf" && node clipboard-to-pdf.js "$@"

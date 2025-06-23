@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"downlevelIteration": true,
+		"allowSyntheticDefaultImports": true,
+		"types": ["bun-types"]
+	},
+	"include": ["**/*.ts"],
+	"exclude": ["node_modules"]
+}

@@ -22,4 +22,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the Python script using uv
-cd "$SCRIPT_DIR/crawler" && uv run python crawler.py "$@"
+cd "$SCRIPT_DIR/scripts/python/crawler" && uv run python crawler.py "$@"

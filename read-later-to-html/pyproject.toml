@@ -1,8 +1,0 @@
-[project]
-name = "read-later-to-html"
-version = "1.0.0"
-description = "Converts JSON file exported by Reeder's Read Later feature to HTML for Raindrop import"
-requires-python = ">=3.8"
-
-[tool.uv]
-dev-dependencies = []
