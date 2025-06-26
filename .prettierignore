@@ -12,3 +12,5 @@ bun.lockb
 scripts/python/
 *.pyc
 __pycache__/
+.claude/
+*.tsbuildinfo

@@ -14,7 +14,7 @@ function getCurrentFinderPath() {
 	try {
 		const script = 'tell application "Finder" to POSIX path of (insertion location as alias)';
 		return execSync(`osascript -e '${script}'`).toString().trim();
-	} catch (error) {
+	} catch {
 		return null;
 	}
 }

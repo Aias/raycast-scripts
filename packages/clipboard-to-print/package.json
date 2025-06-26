@@ -3,7 +3,12 @@
 	"type": "module",
 	"main": "clipboard-to-print.js",
 	"scripts": {
-		"start": "node clipboard-to-print.js"
+		"start": "node clipboard-to-print.js",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write \"**/*.{js,json,md}\"",
+		"format:check": "prettier --check \"**/*.{js,json,md}\"",
+		"check": "bun run format && bun run lint"
 	},
 	"dependencies": {
 		"clipboardy": "^4.0.0",

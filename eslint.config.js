@@ -7,8 +7,9 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default [
 	js.configs.recommended,
+	// TypeScript files
 	{
-		files: ['**/*.ts', '**/*.js'],
+		files: ['**/*.ts'],
 		languageOptions: {
 			parser: typescriptParser,
 			ecmaVersion: 'latest',
@@ -20,6 +21,7 @@ export default [
 				console: 'readonly',
 				process: 'readonly',
 				Buffer: 'readonly',
+				URL: 'readonly',
 			},
 		},
 		plugins: {
@@ -46,6 +48,28 @@ export default [
 					prefer: 'type-imports',
 				},
 			],
+			'no-console': 'off',
+		},
+	},
+	// JavaScript files
+	{
+		files: ['**/*.js'],
+		languageOptions: {
+			ecmaVersion: 'latest',
+			sourceType: 'module',
+			globals: {
+				console: 'readonly',
+				process: 'readonly',
+				Buffer: 'readonly',
+				URL: 'readonly',
+			},
+		},
+		plugins: {
+			prettier: prettier,
+		},
+		rules: {
+			...prettierConfig.rules,
+			'prettier/prettier': 'error',
 			'no-console': 'off',
 		},
 	},

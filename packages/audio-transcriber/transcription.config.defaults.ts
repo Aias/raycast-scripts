@@ -57,12 +57,12 @@ export const defaultConfig: TranscriptionConfig = {
 
 		// Feature toggles - these are the recommended defaults
 		speaker_labels: true, // Identify different speakers
-		format_text: true, // Format text with proper capitalization and punctuation
 		punctuate: true, // Must be true if speaker_labels is true
+		format_text: true, // Format text with proper capitalization and punctuation
 		disfluencies: false, // Remove "um", "uh" etc. (Note: slam-1 doesn't support this)
-		entity_detection: true, // Detect entities like names, locations, etc.
-		auto_chapters: true, // Automatically create chapters
-		auto_highlights: true, // Automatically highlight important sections
+		entity_detection: false, // Detect entities like names, locations, etc.
+		auto_chapters: false, // Automatically create chapters
+		auto_highlights: false, // Automatically highlight important sections
 
 		// Summarization (disabled by default as it conflicts with auto_chapters)
 		summarization: false,

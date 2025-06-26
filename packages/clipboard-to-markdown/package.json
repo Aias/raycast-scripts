@@ -7,12 +7,16 @@
 	},
 	"devDependencies": {
 		"@types/clipboardy": "^2.0.4",
-		"@types/node": "^22.9.0",
-		"@types/turndown": "^5.0.5",
-		"typescript": "^5.6.3"
+		"@types/turndown": "^5.0.5"
 	},
 	"scripts": {
 		"build": "tsc",
-		"start": "node dist/main.js"
+		"start": "node dist/main.js",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write \"**/*.{ts,js,json,md}\"",
+		"format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+		"typecheck": "tsc --noEmit",
+		"check": "bun run format && bun run typecheck && bun run lint"
 	}
 }

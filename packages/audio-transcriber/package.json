@@ -38,14 +38,6 @@
 	},
 	"devDependencies": {
 		"@types/fluent-ffmpeg": "^2.1.27",
-		"@types/node": "^24.0.3",
-		"@typescript-eslint/eslint-plugin": "^8.34.1",
-		"@typescript-eslint/parser": "^8.34.1",
-		"bun-types": "^1.2.16",
-		"eslint": "^9.29.0",
-		"eslint-config-prettier": "^10.1.5",
-		"eslint-plugin-prettier": "^5.5.0",
-		"prettier": "^3.5.3",
-		"typescript": "^5.8.3"
+		"bun-types": "^1.2.16"
 	}
 }
