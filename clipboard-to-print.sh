@@ -22,4 +22,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the Node.js script
-cd "$SCRIPT_DIR/clipboard-to-print" && node clipboard-to-print.js "$@"
+cd "$SCRIPT_DIR/packages/clipboard-to-print" && node clipboard-to-print.js "$@"

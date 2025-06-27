@@ -8,73 +8,116 @@ This is a collection of Raycast productivity scripts for macOS, implementing var
 
 ## Project Structure
 
-Scripts are organized by functionality:
-- **audio-transcriber/** - Audio transcription and summarization (TypeScript/Bun)
-- **clipboard-*/** - Various clipboard utilities (Markdown conversion, PDF generation, printing)
-- **crawler/** - Web crawling with AI extraction (Python)
-- **directory-concat/** - Concatenate directory contents (Python)
-- **extract-tweet-media/** - Extract media from tweets (Python)
-- **finder-to-ghostty/** - Open files in Ghostty terminal (Shell)
-- **flatten-opml/, sort-opml/** - OPML file processing (Python)
-- **read-later-to-html/** - Convert read-later items to HTML (TypeScript)
+This is a Bun workspace with the following structure:
+
+```
+raycast-scripts/
+├── packages/                   # TypeScript/JavaScript packages
+│   ├── audio-transcriber/      # Audio transcription and summarization
+│   ├── clipboard-to-markdown/  # Markdown conversion utility
+│   ├── clipboard-to-pdf/       # PDF generation from clipboard
+│   ├── clipboard-to-print/     # Print clipboard content
+│   └── slack-to-markdown/      # Slack transcript formatter
+├── scripts/                    # Non-TypeScript scripts
+│   ├── python/                 # Python scripts
+│   │   ├── airtable-to-network/
+│   │   ├── crawler/            # Web crawling with AI
+│   │   ├── directory-concat/   # Concatenate directory contents
+│   │   ├── extract-tweet-media/# Extract media from tweets
+│   │   ├── flatten_opml/       # OPML file flattening
+│   │   ├── read-later-to-html/ # Convert read-later to HTML
+│   │   └── sort_opml/          # OPML file sorting
+│   └── shell/                  # Shell-only scripts
+│       └── finder-to-ghostty/  # Open files in Ghostty terminal
+└── *.sh                        # Raycast launcher scripts (at root)
+```
 
 ## Common Development Commands
 
-### TypeScript/Bun Projects (e.g., audio-transcriber)
+### Workspace-level Commands (run from root)
+
 ```bash
-bun run start          # Run the main script
-bun run dev            # Run with watch mode
-bun run lint           # Run ESLint
-bun run lint:fix       # Fix linting issues
-bun run format         # Format code with Prettier
-bun run format:check   # Check formatting
-bun run typecheck      # TypeScript type checking
-bun run check          # Run all checks (typecheck, lint, format)
+bun install            # Install all dependencies for all packages
+bun run lint           # Lint all TypeScript/JavaScript code
+bun run lint:fix       # Fix linting issues across workspace
+bun run format         # Format all code with Prettier
+bun run format:check   # Check formatting across workspace
+bun run typecheck      # TypeScript type checking for all packages
+bun run check          # Run all checks (format, typecheck, lint)
 ```
 
-### TypeScript/Yarn Projects (e.g., clipboard-to-markdown)
+### Package-specific Commands
+
 ```bash
-yarn build    # Compile TypeScript
-yarn start    # Run compiled JavaScript
+# Run a specific package's script
+cd packages/<package-name>
+bun run start          # Run the main script
+bun run dev            # Run with watch mode (if available)
+
+# Or from root:
+bun run --filter <package-name> start
 ```
 
 ### Python Projects
+
 ```bash
+cd scripts/python/<project-name>
 uv run python <script>.py   # Run Python scripts with dependencies
 ```
 
 ## Architecture Patterns
 
 ### Raycast Script Pattern
+
 Each script consists of:
+
 1. **Shell wrapper** (`.sh`) - Contains Raycast metadata and launches the implementation
 2. **Implementation directory** - Contains the actual script logic
 3. **Dependencies** - Managed via `package.json` (TypeScript) or `pyproject.toml` (Python)
 
 ### Technology Stack
+
+- **Bun Workspace** - Monorepo for all TypeScript/JavaScript packages
 - **Python 3.13+** - Using `uv` package manager with `pyproject.toml`
-- **TypeScript** - Either Bun or Yarn, targeting ES modules
+- **TypeScript** - Bun runtime, targeting ES modules, shared configs
 - **Shell scripts** - Bash/Zsh for Raycast integration
 
 ### Code Standards
+
 - TypeScript projects use strict mode with ESLint and Prettier
 - Python projects follow standard formatting conventions
 - All scripts are self-contained with minimal external dependencies
 
 ## Adding New Scripts
 
-1. Create a new directory for your script
-2. Add implementation in Python or TypeScript
-3. Create a Raycast-compatible `.sh` wrapper with proper metadata:
-   ```bash
-   #!/usr/bin/env bash
-   # Required parameters:
-   # @raycast.schemaVersion 1
-   # @raycast.title Script Title
-   # @raycast.mode fullOutput
-   # @raycast.packageName Scripts
+### For TypeScript/JavaScript Projects
+
+1. Create a new package in `packages/` directory
+2. Add a `package.json` with proper name and dependencies
+3. Create `tsconfig.json` extending the base config:
+   ```json
+   {
+   	"extends": "../../tsconfig.base.json",
+   	"compilerOptions": {
+   		"outDir": "./dist",
+   		"rootDir": "./src"
+   	},
+   	"include": ["src/**/*"],
+   	"exclude": ["node_modules", "dist"]
+   }
    ```
-4. Follow existing patterns for dependency management and code structure
+4. Create a Raycast-compatible `.sh` wrapper at the root
+
+### For Python Projects
+
+1. Create a new directory in `scripts/python/`
+2. Add `pyproject.toml` for dependencies
+3. Create a Raycast-compatible `.sh` wrapper at the root
+
+### For Shell-only Scripts
+
+1. Create a new directory in `scripts/shell/`
+2. Create a Raycast-compatible `.sh` wrapper at the root
 
 ## Important Notes
 
@@ -85,6 +128,7 @@ Each script consists of:
 ## Code Quality Requirements
 
 When working on any script in this repository:
+
 - **Always run linting, formatting, and type checking** before completing any task
 - **Run type checking regularly** when making changes to TypeScript projects
 - For TypeScript/Bun projects: Run `bun run check` or individually run `bun run typecheck`, `bun run lint`, and `bun run format:check`
@@ -94,6 +138,7 @@ When working on any script in this repository:
 ### TypeScript/Bun/Node.js Standards
 
 For all TypeScript and JavaScript projects using ESLint:
+
 - **Always use the latest versions** of ESLint, TypeScript, and Prettier
 - **Use ESLint v9+** with the new flat config format (`eslint.config.js`)
 - **Follow the conventions from `@slack-to-markdown/` and `@audio-transcriber/`** as baseline:

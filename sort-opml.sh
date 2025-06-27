@@ -22,4 +22,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the Python script using uv
-cd "$SCRIPT_DIR/sort_opml" && uv run python sort_opml.py "$@"
+cd "$SCRIPT_DIR/scripts/python/sort_opml" && uv run python sort_opml.py "$@"

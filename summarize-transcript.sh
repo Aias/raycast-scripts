@@ -27,8 +27,8 @@ if [ -z "$1" ]; then
     file_path=$(echo "$selected_file" | head -n 1)
     
     # Run with the Finder-selected file
-    bun "$SCRIPT_DIR/audio-transcriber/summarize-only.ts" "$file_path"
+    bun "$SCRIPT_DIR/packages/audio-transcriber/summarize-only.ts" "$file_path"
 else
     # Run with provided arguments
-    bun "$SCRIPT_DIR/audio-transcriber/summarize-only.ts" "$@"
+    bun "$SCRIPT_DIR/packages/audio-transcriber/summarize-only.ts" "$@"
 fi

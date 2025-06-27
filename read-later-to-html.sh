@@ -22,4 +22,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the Python script using uv
-cd "$SCRIPT_DIR/read-later-to-html" && uv run python read-later-to-html.py "$@"
+cd "$SCRIPT_DIR/scripts/python/read-later-to-html" && uv run python read-later-to-html.py "$@"

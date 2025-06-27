@@ -24,4 +24,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the actual script
-exec "$SCRIPT_DIR/directory-concat/directory-concat.sh" "$@"
+exec "$SCRIPT_DIR/scripts/python/directory-concat/directory-concat.sh" "$@"

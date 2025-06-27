@@ -1,0 +1,15 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false
+	},
+	"references": [
+		{ "path": "./packages/audio-transcriber" },
+		{ "path": "./packages/clipboard-to-markdown" },
+		{ "path": "./packages/slack-to-markdown" }
+	],
+	"include": [],
+	"exclude": ["scripts/"]
+}

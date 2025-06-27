@@ -1,0 +1,22 @@
+{
+	"name": "clipboard-to-markdown",
+	"type": "module",
+	"dependencies": {
+		"clipboardy": "^4.0.0",
+		"turndown": "^7.2.0"
+	},
+	"devDependencies": {
+		"@types/clipboardy": "^2.0.4",
+		"@types/turndown": "^5.0.5"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/main.js",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write \"**/*.{ts,js,json,md}\"",
+		"format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+		"typecheck": "tsc --noEmit",
+		"check": "bun run format && bun run typecheck && bun run lint"
+	}
+}

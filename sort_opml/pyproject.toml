@@ -1,8 +1,0 @@
-[project]
-name = "sort-opml"
-version = "1.0.0"
-description = "Sort OPML files alphabetically"
-requires-python = ">=3.8"
-
-[tool.uv]
-dev-dependencies = []

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.git/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+bun.lockb
+*.lock
+.yarn/
+scripts/python/
+*.pyc
+__pycache__/
+.claude/
+*.tsbuildinfo

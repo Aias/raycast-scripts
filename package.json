@@ -1,0 +1,28 @@
+{
+	"name": "raycast-scripts",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write \"**/*.{ts,js,json,md}\"",
+		"format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+		"typecheck": "tsc -b",
+		"check": "bun run format && bun run typecheck && bun run lint",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.29.0",
+		"@types/node": "^24.0.4",
+		"@typescript-eslint/eslint-plugin": "^8.35.0",
+		"@typescript-eslint/parser": "^8.35.0",
+		"eslint": "^9.29.0",
+		"eslint-config-prettier": "^10.1.5",
+		"eslint-plugin-prettier": "^5.5.1",
+		"prettier": "^3.6.1",
+		"typescript": "^5.8.3"
+	}
+}

@@ -23,4 +23,4 @@ load_shell_config
 set_script_dir "$0"
 
 # Run the actual script
-exec "$SCRIPT_DIR/extract-tweet-media/extract-tweet-media.sh" "$@"
+exec "$SCRIPT_DIR/scripts/python/extract-tweet-media/extract-tweet-media.sh" "$@"
