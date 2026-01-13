@@ -7,6 +7,12 @@ import { transcribe, type TranscriptionResult } from './transcription.js';
 import { chunkBySpeaker, summarizeChunks } from './summarization.js';
 import { cleanTranscript } from './cleaning.js';
 import { renameOutputFolder, getOutputFilenames } from './naming.js';
+import {
+	identifySpeakers,
+	createSpeakerMap,
+	logSpeakerIdentification,
+	type SpeakerMap,
+} from './speaker-identification.js';
 
 export interface TranscriptionOptions {
 	inputPath: string;
@@ -18,6 +24,7 @@ export interface CleaningOptions {
 	transcriptPath: string;
 	outputPath?: string;
 	transcriptData?: TranscriptionResult;
+	speakerMap?: SpeakerMap;
 }
 
 export interface SummarizationOptions {
@@ -95,7 +102,7 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
 	}
 
 	// Clean transcript
-	const cleanedText = await cleanTranscript(transcriptionOutput);
+	const cleanedText = await cleanTranscript(transcriptionOutput, options.speakerMap);
 
 	// Determine output path
 	const outputPath = options.outputPath || transcriptPath.replace(/\.json$/, '-cleaned.md');
@@ -173,13 +180,27 @@ export async function runFullPipeline(options: TranscriptionOptions): Promise<vo
 		speakersExpected,
 	});
 
-	// Step 2: Clean
+	// Step 2: Identify speakers
+	let speakerMap: SpeakerMap = new Map();
+	try {
+		const identification = await identifySpeakers(transcriptionOutput.transcript);
+		logSpeakerIdentification(identification);
+		speakerMap = createSpeakerMap(identification, 'high'); // Only use high-confidence matches
+	} catch (error) {
+		console.log(
+			'⚠️  Speaker identification failed:',
+			error instanceof Error ? error.message : String(error),
+		);
+	}
+
+	// Step 3: Clean
 	const { cleanedPath, cleanedText } = await runCleaningOnly({
 		transcriptPath,
 		transcriptData: transcriptionOutput,
+		speakerMap,
 	});
 
-	// Step 3: Summarize with folder renaming
+	// Step 4: Summarize with folder renaming
 	try {
 		const { summaryPath, summary } = await runSummarizationOnly({
 			transcriptPath: cleanedPath,

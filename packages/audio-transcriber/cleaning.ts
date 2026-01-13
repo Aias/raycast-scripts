@@ -2,6 +2,8 @@ import OpenAI from 'openai';
 import { formatTimestamp } from './utils.js';
 import { type TranscriptionResult } from './transcription.js';
 import { getCustomSpellings, getKeyTerms } from './transcription.config.loader.js';
+import { formatSpeakerName, type SpeakerMap } from './speaker-identification.js';
+import { processWithPool } from './concurrency.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
@@ -91,7 +93,7 @@ async function cleanText(text: string, context: string, vocabulary: string[]): P
 	console.log(`    Cleaning text of length: ${text.length}`);
 	try {
 		const response = await openai.chat.completions.create({
-			model: 'gpt-5.1-mini',
+			model: 'gpt-5.1',
 			temperature: 0.1,
 			messages: [
 				{
@@ -112,7 +114,10 @@ async function cleanText(text: string, context: string, vocabulary: string[]): P
 	}
 }
 
-export async function cleanTranscript(transcriptionResult: TranscriptionResult): Promise<string> {
+export async function cleanTranscript(
+	transcriptionResult: TranscriptionResult,
+	speakerMap?: SpeakerMap,
+): Promise<string> {
 	console.log('🧹 Cleaning transcript with AI...');
 	const transcript = transcriptionResult.transcript;
 	const sentences = transcriptionResult.sentences?.sentences;
@@ -132,25 +137,46 @@ export async function cleanTranscript(transcriptionResult: TranscriptionResult):
 		s.from.forEach((w) => vocabularySet.add(w));
 	}
 	keyTerms.forEach((t) => vocabularySet.add(t));
+
+	// Add identified speaker names to vocabulary
+	if (speakerMap) {
+		for (const name of speakerMap.values()) {
+			vocabularySet.add(name);
+		}
+	}
+
 	const vocabulary = Array.from(vocabularySet);
 
 	const groups = groupSentences(sentences, 10);
-	console.log(`  Created ${groups.length} groups for cleaning`);
+	console.log(`  Created ${groups.length} groups for cleaning (parallel, concurrency=10)`);
 
-	const cleanedLines: string[] = [];
+	const speakerMapResolved = speakerMap ?? new Map<string, string>();
 
-	for (let i = 0; i < groups.length; i++) {
-		const group = groups[i];
-		const contextGroups = groups
-			.slice(Math.max(0, i - 2), i)
-			.map((g) => `Speaker ${g.speaker}: ${g.text}`)
-			.join('\n');
+	const cleanedLines = await processWithPool(
+		groups,
+		async (group, index) => {
+			const contextGroups = groups
+				.slice(Math.max(0, index - 2), index)
+				.map((g) => `${formatSpeakerName(g.speaker, speakerMapResolved)}: ${g.text}`)
+				.join('\n');
 
-		const cleanedText = await cleanText(group.text, contextGroups, vocabulary);
-		cleanedLines.push(
-			`[${formatTimestamp(group.start)}] **Speaker ${group.speaker}**: ${cleanedText}`,
-		);
-	}
+			const cleanedText = await cleanText(group.text, contextGroups, vocabulary);
+			const speakerLabel = formatSpeakerName(group.speaker, speakerMapResolved);
+			return `[${formatTimestamp(group.start)}] **${speakerLabel}**: ${cleanedText}`;
+		},
+		{
+			concurrency: 10,
+			fallback: (group) => {
+				const speakerLabel = formatSpeakerName(group.speaker, speakerMapResolved);
+				return `[${formatTimestamp(group.start)}] **${speakerLabel}**: ${group.text}`;
+			},
+			onProgress: (completed, total) => {
+				if (completed % 10 === 0 || completed === total) {
+					console.log(`    Cleaned ${completed}/${total} groups`);
+				}
+			},
+		},
+	);
 
 	return cleanedLines.join('\n\n');
 }

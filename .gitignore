@@ -3,3 +3,4 @@ virtual_envs
 output
 node_modules
 .env
+*.tsbuildinfo

@@ -13,6 +13,14 @@ import {
 
 const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
 
+function formatElapsed(ms: number): string {
+	const seconds = Math.floor(ms / 1000);
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	const remainingSeconds = seconds % 60;
+	return `${minutes}m ${remainingSeconds}s`;
+}
+
 export interface TranscriptionResult {
 	transcript: Transcript;
 	sentences: SentencesResponse;
@@ -35,16 +43,30 @@ export async function transcribe(
 		getTranscriptionOptions(),
 	]);
 
-	const transcript = await assemblyai.transcripts.transcribe({
-		// Spread the config options first
-		...transcriptionOptions,
+	// Start a progress timer that logs every 5 seconds
+	const startTime = Date.now();
+	const progressInterval = setInterval(() => {
+		console.log(`   Transcription in progress... (${formatElapsed(Date.now() - startTime)})`);
+	}, 5000);
 
-		// Then add the required fields and any overrides
-		audio: audioPath,
-		speakers_expected: speakersExpected,
-		custom_spelling: customSpellings,
-		keyterms_prompt: keyTerms,
-	});
+	let transcript: Transcript;
+	try {
+		transcript = await assemblyai.transcripts.transcribe({
+			// Spread the config options first
+			...transcriptionOptions,
+
+			// Then add the required fields and any overrides
+			audio: audioPath,
+			speakers_expected: speakersExpected,
+			custom_spelling: customSpellings,
+			keyterms_prompt: keyTerms,
+		});
+	} finally {
+		clearInterval(progressInterval);
+	}
+
+	const elapsed = formatElapsed(Date.now() - startTime);
+	console.log(`   ✅ Transcription complete (${elapsed})`);
 
 	// Check for errors
 	if (transcript.error) {

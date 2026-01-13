@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { processWithPool } from './concurrency.js';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
@@ -69,8 +70,8 @@ async function summariseChunk(part: string, idx: number, total: number): Promise
 	];
 
 	const resp = await openai.chat.completions.create({
-		model: 'gpt-5.1-mini',
-		temperature: 0,
+		model: 'gpt-5.1',
+		temperature: 0.1,
 		messages,
 	});
 	return resp.choices[0].message.content?.trim() ?? '';
@@ -108,21 +109,29 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 		return resp.choices[0].message.content?.trim() ?? '';
 	}
 
-	// Otherwise, proceed with chunking
-	const partSummaries: string[] = [];
+	// Otherwise, proceed with chunking in parallel
+	console.log(`📝 Summarizing ${chunks.length} chunks (parallel, concurrency=10)...`);
 
-	for (let i = 0; i < chunks.length; i++) {
-		console.log(`📝 Summarising chunk ${i + 1}/${chunks.length}…`);
-		partSummaries.push(await summariseChunk(chunks[i], i + 1, chunks.length));
-	}
+	const partSummaries = await processWithPool(
+		chunks,
+		async (chunk, index) => summariseChunk(chunk, index + 1, chunks.length),
+		{
+			concurrency: 10,
+			fallback: () => '', // Skip failed chunks in final summary
+			onProgress: (completed, total) => {
+				console.log(`    Summarized ${completed}/${total} chunks`);
+			},
+		},
+	);
 
 	/* Final "reduce" pass */
+	const validSummaries = partSummaries.filter((s) => s.length > 0);
 	const finalMessages: ChatCompletionMessageParam[] = [
 		{
 			role: 'system',
 			content: REDUCE_SYSTEM_PROMPT,
 		},
-		{ role: 'user', content: partSummaries.join('\n') },
+		{ role: 'user', content: validSummaries.join('\n') },
 	];
 
 	const finalSummaryResp = await openai.chat.completions.create({
