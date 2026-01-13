@@ -27,7 +27,7 @@ Rules — follow every item:
 3. Fix grammar, capitalization, and punctuation.  
    • Expand casual contractions (“cause” → “because,” “gonna” → “going to”).  
    • Repair fragments/run-ons. Split or join sentences as needed.  
-   • When “like” introduces reported speech, replace it with “said” and put the quote in double quotes.
+   • When “like” introduces reported speech, replace it with “said” and put the quote in double quotes ("he was like, what do you think?" -> "he said, 'What do you think?'").
 
 4. Correct obvious mis-recognitions. Replace nonsense words with the most plausible term, or append “[sic]” if unsure.
 
@@ -91,7 +91,7 @@ async function cleanText(text: string, context: string, vocabulary: string[]): P
 	console.log(`    Cleaning text of length: ${text.length}`);
 	try {
 		const response = await openai.chat.completions.create({
-			model: 'gpt-4.1-mini',
+			model: 'gpt-5.1-mini',
 			temperature: 0.1,
 			messages: [
 				{

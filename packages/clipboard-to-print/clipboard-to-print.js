@@ -2,7 +2,7 @@ import clipboardy from 'clipboardy';
 import http from 'http';
 import https from 'https';
 
-const SERVER_URL = 'https://print-toys.vercel.app';
+const SERVER_URL = 'http://mac-mini:3030';
 
 async function main() {
 	try {
