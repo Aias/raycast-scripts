@@ -1,11 +1,16 @@
+import 'dotenv/config';
 import clipboardy from 'clipboardy';
 import http from 'http';
 import https from 'https';
 
-const SERVER_URL = 'http://mac-mini:3030';
+const SERVER_URL = process.env.PRINT_SERVER_URL;
 
 async function main() {
 	try {
+		if (!SERVER_URL) {
+			throw new Error('PRINT_SERVER_URL environment variable is not set.');
+		}
+
 		const clipboardContent = clipboardy.readSync();
 
 		if (!clipboardContent || clipboardContent.trim() === '') {

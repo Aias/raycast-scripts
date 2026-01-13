@@ -12,6 +12,7 @@
 	},
 	"dependencies": {
 		"clipboardy": "^5.0.2",
+		"dotenv": "^16.4.7",
 		"markdown-pdf": "^11.0.0"
 	},
 	"engines": {
