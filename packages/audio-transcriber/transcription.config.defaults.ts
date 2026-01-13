@@ -52,7 +52,7 @@ export const defaultConfig: TranscriptionConfig = {
 	// Default transcription options
 	transcriptionOptions: {
 		// Model and language
-		speech_model: 'slam-1', // Options: "slam-1" (best quality), "conformer-2", "nano" (fastest)
+		speech_models: ['slam-1'], // Options: "slam-1" (best quality), "conformer-2", "nano" (fastest)
 		language_code: 'en_us',
 
 		// Feature toggles - these are the recommended defaults

@@ -69,7 +69,7 @@ async function summariseChunk(part: string, idx: number, total: number): Promise
 	];
 
 	const resp = await openai.chat.completions.create({
-		model: 'gpt-4o-mini',
+		model: 'gpt-5.1-mini',
 		temperature: 0,
 		messages,
 	});
@@ -100,7 +100,7 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 		];
 
 		const resp = await openai.chat.completions.create({
-			model: 'gpt-4o',
+			model: 'gpt-5.2',
 			temperature: 0,
 			messages,
 		});
@@ -126,7 +126,7 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 	];
 
 	const finalSummaryResp = await openai.chat.completions.create({
-		model: 'gpt-4o',
+		model: 'gpt-5.2',
 		temperature: 0,
 		messages: finalMessages,
 	});

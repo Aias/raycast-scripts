@@ -1,19 +1,16 @@
-// @ts-check
+import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
-import typescript from '@typescript-eslint/eslint-plugin';
-import typescriptParser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import tseslint from 'typescript-eslint';
 
-export default [
+export default defineConfig([
 	js.configs.recommended,
-	// TypeScript files
+	tseslint.configs.recommended,
 	{
 		files: ['**/*.ts'],
+		ignores: ['eslint.config.ts'],
 		languageOptions: {
-			parser: typescriptParser,
-			ecmaVersion: 'latest',
-			sourceType: 'module',
 			parserOptions: {
 				project: ['./tsconfig.json', './packages/*/tsconfig.json'],
 			},
@@ -25,11 +22,9 @@ export default [
 			},
 		},
 		plugins: {
-			'@typescript-eslint': typescript,
-			prettier: prettier,
+			prettier,
 		},
 		rules: {
-			...typescript.configs['recommended'].rules,
 			...prettierConfig.rules,
 			'prettier/prettier': 'error',
 			'@typescript-eslint/explicit-function-return-type': 'off',
@@ -51,12 +46,9 @@ export default [
 			'no-console': 'off',
 		},
 	},
-	// JavaScript files
 	{
 		files: ['**/*.js'],
 		languageOptions: {
-			ecmaVersion: 'latest',
-			sourceType: 'module',
 			globals: {
 				console: 'readonly',
 				process: 'readonly',
@@ -65,7 +57,7 @@ export default [
 			},
 		},
 		plugins: {
-			prettier: prettier,
+			prettier,
 		},
 		rules: {
 			...prettierConfig.rules,
@@ -73,19 +65,17 @@ export default [
 			'no-console': 'off',
 		},
 	},
-	{
-		ignores: [
-			'node_modules/',
-			'dist/',
-			'*.d.ts',
-			'.git/',
-			'coverage/',
-			'scripts/python/',
-			'*.pyc',
-			'__pycache__/',
-			'bun.lockb',
-			'*.lock',
-			'.yarn/',
-		],
-	},
-];
+	globalIgnores([
+		'node_modules/',
+		'dist/',
+		'*.d.ts',
+		'.git/',
+		'coverage/',
+		'scripts/python/',
+		'*.pyc',
+		'__pycache__/',
+		'bun.lockb',
+		'*.lock',
+		'.yarn/',
+	]),
+]);
