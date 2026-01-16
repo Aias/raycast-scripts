@@ -61,12 +61,17 @@ const jsonSchema = {
 
 const IDENTIFICATION_PROMPT = `Analyze this meeting transcript and identify the real names of each speaker.
 
+CRITICAL RULE - Understand who is being addressed:
+When Speaker X says "Hey [Name]" or "Thanks [Name]" or addresses someone by name, [Name] is the person BEING SPOKEN TO, not Speaker X.
+- Example: If Speaker A says "Hey Nick", then Speaker A is NOT Nick. Nick is the OTHER person (likely Speaker B).
+- Example: If Speaker B says "Thanks Sam", then Speaker B is NOT Sam. Sam is the person being thanked (likely Speaker A).
+
 Instructions:
-1. Look for explicit self-introductions ("Hi, I'm [Name]", "This is [Name]")
-2. Look for others directly addressing a speaker by name while they're speaking ("Thanks [Name]", "What do you think, [Name]?")
+1. Look for explicit self-introductions ("Hi, I'm [Name]", "This is [Name]") - these identify the CURRENT speaker
+2. Look for greetings and direct address ("Hey [Name]", "Thanks [Name]", "What do you think, [Name]?") - these identify the OTHER speaker, not the one talking
 3. Be VERY conservative - only mark "high" confidence when you have clear, unambiguous evidence
 4. Names mentioned in discussion may refer to people NOT on the call - do not assume they are speakers
-5. If someone says "Thanks [Name]" at the end, verify [Name] was actually the previous speaker
+5. Cross-reference: if A calls B "Nick" and B calls A "Sam", then A=Sam and B=Nick
 6. It's better to return null than to guess wrong
 
 Return identifications for ALL speakers in the transcript, even if their name is unknown (use null for name).`;

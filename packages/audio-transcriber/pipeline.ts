@@ -242,9 +242,9 @@ export async function runFullPipeline(options: TranscriptionOptions): Promise<vo
 		);
 
 		// Still rename folder with basic naming if summary failed
-		const { extractDateFromFilename, getCurrentDate } = await import('./naming.js');
-		const date = extractDateFromFilename(inputPath) ?? getCurrentDate();
-		const newFolderName = `${date}-untitled`;
+		const { extractDateTimeFromFilename, getCurrentDate } = await import('./naming.js');
+		const dateTime = extractDateTimeFromFilename(inputPath) ?? getCurrentDate();
+		const newFolderName = `${dateTime}-untitled`;
 		const newPath = path.join(path.dirname(outputDir), newFolderName);
 
 		if (outputDir !== newPath && fs.existsSync(outputDir)) {

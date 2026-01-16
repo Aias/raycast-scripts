@@ -41,24 +41,30 @@ export async function generateTitle(summary: string): Promise<string> {
 	}
 }
 
-export function extractDateFromFilename(filename: string): string | null {
-	// Try to extract date from filename patterns like:
-	// 2025-06-04_140234_000.wav
-	// 2025-06-04-recording.mp3
-	// 20250604_meeting.wav
+export function extractDateTimeFromFilename(filename: string): string | null {
+	// Extract date and time (hours + minutes only) from filename patterns like:
+	// 2025-06-04_140234_000.wav → 2025-06-04_1402
+	// 2025-06-04-recording.mp3 → 2025-06-04
+	// 20250604_meeting.wav → 2025-06-04
 
 	const basename = path.basename(filename);
 
-	// Pattern 1: YYYY-MM-DD
-	const match1 = basename.match(/(\d{4})-(\d{2})-(\d{2})/);
+	// Pattern 1: YYYY-MM-DD_HHMMSS (TP-7 format) - extract date + hours/minutes only
+	const match1 = basename.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})\d{2}/);
 	if (match1) {
-		return `${match1[1]}-${match1[2]}-${match1[3]}`;
+		return `${match1[1]}-${match1[2]}-${match1[3]}_${match1[4]}${match1[5]}`;
 	}
 
-	// Pattern 2: YYYYMMDD
-	const match2 = basename.match(/(\d{4})(\d{2})(\d{2})/);
+	// Pattern 2: YYYY-MM-DD (date only)
+	const match2 = basename.match(/(\d{4})-(\d{2})-(\d{2})/);
 	if (match2) {
 		return `${match2[1]}-${match2[2]}-${match2[3]}`;
+	}
+
+	// Pattern 3: YYYYMMDD (compact date)
+	const match3 = basename.match(/(\d{4})(\d{2})(\d{2})/);
+	if (match3) {
+		return `${match3[1]}-${match3[2]}-${match3[3]}`;
 	}
 
 	return null;
@@ -77,15 +83,15 @@ export async function renameOutputFolder(
 	summary: string,
 	originalFilename: string,
 ): Promise<string> {
-	// Get date from filename or use current date
-	const date = extractDateFromFilename(originalFilename) ?? getCurrentDate();
+	// Get date/time from filename or use current date
+	const dateTime = extractDateTimeFromFilename(originalFilename) ?? getCurrentDate();
 
 	// Generate descriptive title
 	console.log('🏷️  Generating descriptive title...');
 	const title = await generateTitle(summary);
 
 	// Create new folder name
-	const newFolderName = `${date}-${title}`;
+	const newFolderName = `${dateTime}-${title}`;
 	const parentDir = path.dirname(currentPath);
 	const newPath = path.join(parentDir, newFolderName);
 
