@@ -37,7 +37,7 @@ import type { TranscriptionConfig } from './transcription.config.types.js';
  *
  *   transcriptionOptions: {
  *     // Use a different speech model
- *     speech_model: "best",
+ *     speech_models: ["universal-3-pro"],
  *
  *     // Disable features you don't need
  *     entity_detection: false,
@@ -52,14 +52,18 @@ export const defaultConfig: TranscriptionConfig = {
 	// Default transcription options
 	transcriptionOptions: {
 		// Model and language
-		speech_models: ['slam-1'], // Options: "slam-1" (best quality), "conformer-2", "nano" (fastest)
+		speech_models: ['universal-3-pro'], // Options: "universal-3-pro" (best quality), "conformer-2", "universal-2" (fastest)
 		language_code: 'en_us',
+		temperature: 0, // 0 = most deterministic, 1 = most creative
+
+		// Key terms matching (only applies when keyTerms are provided)
+		keyterms_prompt_options: { keyterms_match_strength: 'high' },
 
 		// Feature toggles - these are the recommended defaults
 		speaker_labels: true, // Identify different speakers
 		punctuate: true, // Must be true if speaker_labels is true
 		format_text: true, // Format text with proper capitalization and punctuation
-		disfluencies: false, // Remove "um", "uh" etc. (Note: slam-1 doesn't support this)
+		disfluencies: false, // Remove "um", "uh" etc.
 		entity_detection: false, // Detect entities like names, locations, etc.
 		auto_chapters: false, // Automatically create chapters
 		auto_highlights: false, // Automatically highlight important sections

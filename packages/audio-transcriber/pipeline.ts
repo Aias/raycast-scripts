@@ -95,7 +95,7 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				console.error('❌ Invalid transcript JSON structure:', error.message);
-				throw new Error(`Invalid transcript file: ${transcriptPath}`);
+				throw new Error(`Invalid transcript file: ${transcriptPath}`, { cause: error });
 			}
 			throw error;
 		}

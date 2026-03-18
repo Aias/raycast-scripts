@@ -7,11 +7,13 @@ Raycast script package for transcribing audio files using AssemblyAI with speake
 The Teenage Engineering TP-7 uses MTP (Media Transfer Protocol), not USB Mass Storage. macOS has no native MTP support.
 
 **Accessing recordings:**
+
 - Requires Field Kit app to be open (acts as MTP bridge)
 - Files sync to: `~/Library/Containers/engineering.teenage.fieldkit/Data/Documents/TP-7 MTP Device-{SERIAL}/recordings/`
 - When Field Kit closes, the folder becomes stale/inaccessible
 
 **File format:**
+
 - WAV files, naming pattern: `YYYY-MM-DD_HHMMSS_000.wav`
 - High quality uncompressed audio (large files)
 
