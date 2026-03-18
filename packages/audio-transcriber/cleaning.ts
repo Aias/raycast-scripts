@@ -93,7 +93,8 @@ async function cleanText(text: string, context: string, vocabulary: string[]): P
 	console.log(`    Cleaning text of length: ${text.length}`);
 	try {
 		const response = await openai.chat.completions.create({
-			model: 'gpt-5.1',
+			model: 'gpt-5.4',
+			reasoning_effort: 'low',
 			temperature: 0.1,
 			messages: [
 				{

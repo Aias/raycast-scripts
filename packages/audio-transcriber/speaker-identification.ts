@@ -88,7 +88,8 @@ export async function identifySpeakers(transcript: Transcript): Promise<SpeakerI
 	console.log('🔍 Identifying speakers...');
 
 	const response = await openai.chat.completions.create({
-		model: 'gpt-5.2',
+		model: 'gpt-5.4',
+		reasoning_effort: 'medium',
 		temperature: 0.1,
 		messages: [
 			{ role: 'system', content: IDENTIFICATION_PROMPT },
