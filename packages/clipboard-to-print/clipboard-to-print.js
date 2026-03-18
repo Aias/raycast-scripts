@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import clipboardy from 'clipboardy';
 import http from 'http';
 import https from 'https';

@@ -11,9 +11,9 @@
 		"check": "bun run format && bun run lint"
 	},
 	"dependencies": {
-		"clipboardy": "^5.0.2",
-		"dotenv": "^16.4.7",
-		"markdown-pdf": "^11.0.0"
+		"clipboardy": "5.3.1",
+		"dotenv": "17.3.1",
+		"markdown-pdf": "11.0.0"
 	},
 	"engines": {
 		"node": ">=22.0.0"
