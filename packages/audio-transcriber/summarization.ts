@@ -72,7 +72,6 @@ async function summariseChunk(part: string, idx: number, total: number): Promise
 	const resp = await openai.chat.completions.create({
 		model: 'gpt-5.4',
 		reasoning_effort: 'low',
-		temperature: 0.1,
 		messages,
 	});
 	return resp.choices[0].message.content?.trim() ?? '';
@@ -104,7 +103,6 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 		const resp = await openai.chat.completions.create({
 			model: 'gpt-5.4',
 			reasoning_effort: 'medium',
-			temperature: 0,
 			messages,
 		});
 
@@ -139,7 +137,6 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 	const finalSummaryResp = await openai.chat.completions.create({
 		model: 'gpt-5.4',
 		reasoning_effort: 'medium',
-		temperature: 0,
 		messages: finalMessages,
 	});
 

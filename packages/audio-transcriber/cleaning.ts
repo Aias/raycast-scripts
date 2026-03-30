@@ -95,7 +95,6 @@ async function cleanText(text: string, context: string, vocabulary: string[]): P
 		const response = await openai.chat.completions.create({
 			model: 'gpt-5.4',
 			reasoning_effort: 'low',
-			temperature: 0.1,
 			messages: [
 				{
 					role: 'user',
