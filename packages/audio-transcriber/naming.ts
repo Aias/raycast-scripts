@@ -19,7 +19,7 @@ Summary:
 export async function generateTitle(summary: string): Promise<string> {
 	try {
 		const response = await openai.chat.completions.create({
-			model: 'gpt-5.4',
+			model: 'gpt-5.5',
 			reasoning_effort: 'low',
 			messages: [
 				{

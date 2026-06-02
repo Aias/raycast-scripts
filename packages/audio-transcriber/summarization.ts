@@ -70,7 +70,7 @@ async function summariseChunk(part: string, idx: number, total: number): Promise
 	];
 
 	const resp = await openai.chat.completions.create({
-		model: 'gpt-5.4',
+		model: 'gpt-5.5',
 		reasoning_effort: 'low',
 		messages,
 	});
@@ -101,7 +101,7 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 		];
 
 		const resp = await openai.chat.completions.create({
-			model: 'gpt-5.4',
+			model: 'gpt-5.5',
 			reasoning_effort: 'medium',
 			messages,
 		});
@@ -135,7 +135,7 @@ export async function summarizeChunks(chunks: string[]): Promise<string> {
 	];
 
 	const finalSummaryResp = await openai.chat.completions.create({
-		model: 'gpt-5.4',
+		model: 'gpt-5.5',
 		reasoning_effort: 'medium',
 		messages: finalMessages,
 	});

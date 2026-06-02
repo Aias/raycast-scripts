@@ -3,6 +3,7 @@ import {
 	type ParagraphsResponse,
 	type SentencesResponse,
 	type Transcript,
+	type TranscribeParams,
 } from 'assemblyai';
 import { formatTimestamp } from './utils.js';
 import {
@@ -49,18 +50,25 @@ export async function transcribe(
 		console.log(`   Transcription in progress... (${formatElapsed(Date.now() - startTime)})`);
 	}, 5000);
 
+	const params: TranscribeParams = {
+		...transcriptionOptions,
+		audio: audioPath,
+		speakers_expected: speakersExpected,
+	};
+	// Only send enrichment fields when populated. Empty arrays add nothing, and
+	// AssemblyAI rejects keyterms_prompt_options without a keyterms_prompt.
+	if (customSpellings.length > 0) {
+		params.custom_spelling = customSpellings;
+	}
+	if (keyTerms.length > 0) {
+		params.keyterms_prompt = keyTerms;
+	} else {
+		delete params.keyterms_prompt_options;
+	}
+
 	let transcript: Transcript;
 	try {
-		transcript = await assemblyai.transcripts.transcribe({
-			// Spread the config options first
-			...transcriptionOptions,
-
-			// Then add the required fields and any overrides
-			audio: audioPath,
-			speakers_expected: speakersExpected,
-			custom_spelling: customSpellings,
-			keyterms_prompt: keyTerms,
-		});
+		transcript = await assemblyai.transcripts.transcribe(params);
 	} finally {
 		clearInterval(progressInterval);
 	}
@@ -99,8 +107,6 @@ export function formatTranscript(transcript: Transcript): string {
 
 	// Build transcript from utterances if available, otherwise use full text
 	if (transcript.utterances && transcript.utterances.length > 0) {
-		// TODO: Future enhancement - infer speaker names from conversation content
-		// e.g., "Hi, I'm John" → replace "Speaker A" with "John" throughout
 		const lines = transcript.utterances.map(
 			(u) => `[${formatTimestamp(u.start)}] **Speaker ${u.speaker}**: ${u.text}`,
 		);

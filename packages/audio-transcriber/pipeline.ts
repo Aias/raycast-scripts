@@ -8,11 +8,11 @@ import { chunkBySpeaker, summarizeChunks } from './summarization.js';
 import { cleanTranscript } from './cleaning.js';
 import { renameOutputFolder, getOutputFilenames } from './naming.js';
 import {
-	identifySpeakers,
-	createSpeakerMap,
+	refineSpeakerIdentification,
 	logSpeakerIdentification,
 	type SpeakerMap,
 } from './speaker-identification.js';
+import { getKnownSpeakers } from './transcription.config.loader.js';
 
 export interface TranscriptionOptions {
 	inputPath: string;
@@ -180,18 +180,14 @@ export async function runFullPipeline(options: TranscriptionOptions): Promise<vo
 		speakersExpected,
 	});
 
-	// Step 2: Identify speakers
-	let speakerMap: SpeakerMap = new Map();
-	try {
-		const identification = await identifySpeakers(transcriptionOutput.transcript);
-		logSpeakerIdentification(identification);
-		speakerMap = createSpeakerMap(identification, 'high'); // Only use high-confidence matches
-	} catch (error) {
-		console.log(
-			'⚠️  Speaker identification failed:',
-			error instanceof Error ? error.message : String(error),
-		);
-	}
+	// Step 2: Resolve speaker names — AssemblyAI's audio-based identification,
+	// reconciled by GPT-5.5 against the transcript and the known-speaker roster
+	const knownSpeakers = await getKnownSpeakers();
+	const speakerMap: SpeakerMap = await refineSpeakerIdentification(
+		transcriptionOutput.transcript,
+		knownSpeakers,
+	);
+	logSpeakerIdentification(speakerMap);
 
 	// Step 3: Clean
 	const { cleanedPath, cleanedText } = await runCleaningOnly({
