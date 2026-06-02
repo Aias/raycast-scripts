@@ -17,5 +17,10 @@ export type ConfigurableTranscriptionOptions = Omit<
 export interface TranscriptionConfig {
 	customSpellings: CustomSpelling[];
 	keyTerms: string[];
+	// Recurring participants used as hints (not a hard filter) when reconciling
+	// speaker identities. Helps normalize spellings and reject names that were
+	// only mentioned in passing. Open-set: speakers off this list can still be
+	// identified from context.
+	knownSpeakers?: string[];
 	transcriptionOptions: Partial<ConfigurableTranscriptionOptions>;
 }

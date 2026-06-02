@@ -48,6 +48,7 @@ import type { TranscriptionConfig } from './transcription.config.types.js';
 export const defaultConfig: TranscriptionConfig = {
 	customSpellings: [],
 	keyTerms: [],
+	knownSpeakers: [],
 
 	// Default transcription options
 	transcriptionOptions: {
@@ -61,6 +62,14 @@ export const defaultConfig: TranscriptionConfig = {
 
 		// Feature toggles - these are the recommended defaults
 		speaker_labels: true, // Identify different speakers
+		// Resolve diarized speakers (A, B, C) to real names inferred from the
+		// conversation itself (self-introductions, direct address). Requires
+		// speaker_labels. Omitting known_values lets the model infer names freely.
+		speech_understanding: {
+			request: {
+				speaker_identification: { speaker_type: 'name' },
+			},
+		},
 		punctuate: true, // Must be true if speaker_labels is true
 		format_text: true, // Format text with proper capitalization and punctuation
 		disfluencies: false, // Remove "um", "uh" etc.

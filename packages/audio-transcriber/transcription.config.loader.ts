@@ -31,6 +31,7 @@ export async function loadConfig(): Promise<TranscriptionConfig> {
 	return {
 		customSpellings: [...defaultConfig.customSpellings, ...localConfig.customSpellings],
 		keyTerms: [...defaultConfig.keyTerms, ...localConfig.keyTerms],
+		knownSpeakers: [...(defaultConfig.knownSpeakers ?? []), ...(localConfig.knownSpeakers ?? [])],
 		transcriptionOptions: {
 			...defaultConfig.transcriptionOptions,
 			...localConfig.transcriptionOptions,
@@ -47,6 +48,11 @@ export async function getCustomSpellings() {
 export async function getKeyTerms() {
 	const config = await loadConfig();
 	return config.keyTerms;
+}
+
+export async function getKnownSpeakers() {
+	const config = await loadConfig();
+	return config.knownSpeakers ?? [];
 }
 
 export async function getTranscriptionOptions() {
