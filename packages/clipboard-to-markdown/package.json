@@ -10,8 +10,7 @@
 		"@types/turndown": "5.0.6"
 	},
 	"scripts": {
-		"build": "tsc",
-		"start": "node dist/main.js",
+		"start": "bun run src/main.ts",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,js,json,md}\"",

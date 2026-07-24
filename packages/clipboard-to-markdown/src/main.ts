@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 // Required parameters:
 // @raycast.schemaVersion 1
