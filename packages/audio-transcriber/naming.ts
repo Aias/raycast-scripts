@@ -1,8 +1,6 @@
-import OpenAI from 'openai';
 import path from 'node:path';
 import fs from 'node:fs';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+import { MODELS, openai } from './openai.js';
 
 const TITLE_PROMPT = `Based on this summary, generate a 3-5 word descriptive title for the meeting/call.
 
@@ -19,8 +17,8 @@ Summary:
 export async function generateTitle(summary: string): Promise<string> {
 	try {
 		const response = await openai.chat.completions.create({
-			model: 'gpt-5.5',
-			reasoning_effort: 'low',
+			model: MODELS.mechanical,
+			reasoning_effort: 'none',
 			messages: [
 				{
 					role: 'user',

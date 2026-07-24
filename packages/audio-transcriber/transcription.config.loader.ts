@@ -1,6 +1,6 @@
 // Configuration loader that merges defaults with optional local config
 
-import type { TranscriptionConfig } from './transcription.config.types.js';
+import type { SpeakerProfile, TranscriptionConfig } from './transcription.config.types.js';
 import { defaultConfig } from './transcription.config.defaults.js';
 
 async function loadLocalConfig(): Promise<TranscriptionConfig | null> {
@@ -50,9 +50,11 @@ export async function getKeyTerms() {
 	return config.keyTerms;
 }
 
-export async function getKnownSpeakers() {
+export async function getKnownSpeakers(): Promise<SpeakerProfile[]> {
 	const config = await loadConfig();
-	return config.knownSpeakers ?? [];
+	return (config.knownSpeakers ?? []).map((speaker) =>
+		typeof speaker === 'string' ? { name: speaker } : speaker,
+	);
 }
 
 export async function getTranscriptionOptions() {

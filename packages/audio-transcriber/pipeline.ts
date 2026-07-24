@@ -1,22 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
-import { createOutputFolder } from './utils.js';
-import { convertToWav } from './audio.js';
+import { createOutputFolder, type SpeakerHint } from './utils.js';
+import { convertToFlac } from './audio.js';
 import { transcribe, type TranscriptionResult } from './transcription.js';
-import { chunkBySpeaker, summarizeChunks } from './summarization.js';
-import { cleanTranscript } from './cleaning.js';
+import { summarize } from './summarization.js';
+import { cleanTranscript, renderTranscript } from './cleaning.js';
 import { renameOutputFolder, getOutputFilenames } from './naming.js';
-import {
-	refineSpeakerIdentification,
-	logSpeakerIdentification,
-	type SpeakerMap,
-} from './speaker-identification.js';
+import { refineSpeakerIdentification, logSpeakerIdentification } from './speaker-identification.js';
 import { getKnownSpeakers } from './transcription.config.loader.js';
 
 export interface TranscriptionOptions {
 	inputPath: string;
-	speakersExpected?: number;
+	speakers?: SpeakerHint;
 	outputDir?: string;
 }
 
@@ -24,7 +20,6 @@ export interface CleaningOptions {
 	transcriptPath: string;
 	outputPath?: string;
 	transcriptData?: TranscriptionResult;
-	speakerMap?: SpeakerMap;
 }
 
 export interface SummarizationOptions {
@@ -42,17 +37,16 @@ export async function runTranscriptionOnly(options: TranscriptionOptions): Promi
 	transcriptionOutput: TranscriptionResult;
 	transcriptPath: string;
 }> {
-	const { inputPath, speakersExpected } = options;
+	const { inputPath, speakers } = options;
 
 	// Create output folder if not provided
 	const outputDir = options.outputDir || createOutputFolder(inputPath);
 	console.log(`📁 Output folder: ${outputDir}`);
 
-	// Convert audio to WAV
-	const wavPath = await convertToWav(inputPath, outputDir);
+	const audioPath = await convertToFlac(inputPath, outputDir);
 
 	// Transcribe and get sentences/paragraphs
-	const result = await transcribe(wavPath, speakersExpected);
+	const result = await transcribe(audioPath, speakers);
 
 	// Save the complete output to JSON
 	const jsonPath = path.join(outputDir, 'transcript-raw.json');
@@ -101,8 +95,17 @@ export async function runCleaningOnly(options: CleaningOptions): Promise<{
 		}
 	}
 
-	// Clean transcript
-	const cleanedText = await cleanTranscript(transcriptionOutput, options.speakerMap);
+	// Resolving speaker names and editing the passages are independent — names are
+	// applied when the transcript is rendered — so both run at once.
+	const [speakerMap, groups] = await Promise.all([
+		getKnownSpeakers().then((knownSpeakers) =>
+			refineSpeakerIdentification(transcriptionOutput.transcript, knownSpeakers),
+		),
+		cleanTranscript(transcriptionOutput),
+	]);
+	logSpeakerIdentification(speakerMap);
+
+	const cleanedText = renderTranscript(groups, speakerMap);
 
 	// Determine output path
 	const outputPath = options.outputPath || transcriptPath.replace(/\.json$/, '-cleaned.md');
@@ -135,9 +138,7 @@ export async function runSummarizationOnly(options: SummarizationOptions): Promi
 	// Get or create output directory
 	let outputDir = options.outputDir || path.dirname(transcriptPath);
 
-	// Chunk and summarize
-	const chunks = chunkBySpeaker(transcriptText);
-	const summary = await summarizeChunks(chunks);
+	const summary = await summarize(transcriptText);
 
 	// Write summary
 	const summaryPath = path.join(outputDir, 'summary.md');
@@ -172,31 +173,21 @@ export async function runSummarizationOnly(options: SummarizationOptions): Promi
  * Run the full pipeline (backward compatibility)
  */
 export async function runFullPipeline(options: TranscriptionOptions): Promise<void> {
-	const { inputPath, speakersExpected } = options;
+	const { inputPath, speakers } = options;
 
 	// Step 1: Transcribe
 	const { outputDir, transcriptionOutput, transcriptPath } = await runTranscriptionOnly({
 		inputPath,
-		speakersExpected,
+		speakers,
 	});
 
-	// Step 2: Resolve speaker names — AssemblyAI's audio-based identification,
-	// reconciled by GPT-5.5 against the transcript and the known-speaker roster
-	const knownSpeakers = await getKnownSpeakers();
-	const speakerMap: SpeakerMap = await refineSpeakerIdentification(
-		transcriptionOutput.transcript,
-		knownSpeakers,
-	);
-	logSpeakerIdentification(speakerMap);
-
-	// Step 3: Clean
+	// Step 2: Resolve speaker names and clean
 	const { cleanedPath, cleanedText } = await runCleaningOnly({
 		transcriptPath,
 		transcriptData: transcriptionOutput,
-		speakerMap,
 	});
 
-	// Step 4: Summarize with folder renaming
+	// Step 3: Summarize with folder renaming
 	try {
 		const { summaryPath, summary } = await runSummarizationOnly({
 			transcriptPath: cleanedPath,

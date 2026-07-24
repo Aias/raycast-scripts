@@ -1,50 +1,64 @@
-import OpenAI from 'openai';
 import { formatTimestamp } from './utils.js';
 import { type TranscriptionResult } from './transcription.js';
-import { getCustomSpellings, getKeyTerms } from './transcription.config.loader.js';
+import {
+	getCustomSpellings,
+	getKeyTerms,
+	getKnownSpeakers,
+} from './transcription.config.loader.js';
 import { formatSpeakerName, type SpeakerMap } from './speaker-identification.js';
 import { processWithPool } from './concurrency.js';
+import { MODELS, openai } from './openai.js';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+// Sentences per request. Large enough that a meeting is tens of requests rather
+// than hundreds; small enough that a failure costs one passage, not the file.
+const SENTENCES_PER_GROUP = 40;
+const CONCURRENCY = 10;
 
-const makeCleaningPrompt = (
-	text: string,
-	context: string,
-	vocabulary: string[],
-) => `You are a professional transcription editor. Make only the minimum changes needed for clarity and correctness.
+// Trailing characters of the preceding group carried in as context, so a passage
+// that opens mid-thought still resolves.
+const CONTEXT_CHARS = 500;
 
-The conversation context may help resolve uncertain words:
-${context}
+// Groups the cache prefix by task so repeated runs land on the same machine.
+const CACHE_KEY = 'audio-transcriber:cleaning';
 
-Important words and names to preserve exactly: ${vocabulary.join(', ')}
+/**
+ * Everything static across a run goes in the system message so it forms a
+ * cacheable prefix; only the passage and its context vary per request.
+ */
+const makeSystemPrompt = (vocabulary: string[]) =>
+	`You are a transcription editor working on speech-to-text output. You cannot hear the audio, so you must never guess at what was said.
 
-Rules — follow every item:
+Apply exactly these edits:
 
-1. Delete non-lexical fillers: "um," "uh," "er," "you know," "so" (when meaningless), "kinda," "sort of," "stuff," "maybe," and "like" when it is filler.  
-   • A “filler like” is one that precedes a noun/verb phrase and can be removed without altering meaning.  
-   • Keep “like” when it introduces a comparison (“like a sports car”) or means “such as.”
+1. Delete non-lexical fillers: "um", "uh", "er", "mm", and "like", "you know", "I mean" where they carry no meaning. Keep "like" when it introduces a comparison ("like a sports car") or means "such as".
+2. Delete stutters, false starts, and immediate repetitions that carry no meaning ("I— I think", "the the").
+3. Add or correct punctuation, capitalization, and sentence boundaries.
+4. Correct a word only when it is a misrecognition of a term on the vocabulary list below. Leave every other word exactly as transcribed, even where it reads oddly — an odd transcription is evidence, a plausible substitute is invention.
+5. Preserve the wording otherwise. Do not expand contractions, repair grammar, reorder clauses, paraphrase, summarize, add content, or drop content.
+6. Split a passage into paragraphs at natural pauses when it runs longer than about three sentences.
 
-2. Remove immediate word repetitions that add no meaning ("I—I think," "the the").
+Return only the edited passage. No commentary, no code fences.
 
-3. Fix grammar, capitalization, and punctuation.  
-   • Expand casual contractions (“cause” → “because,” “gonna” → “going to”).  
-   • Repair fragments/run-ons. Split or join sentences as needed.  
-   • When “like” introduces reported speech, replace it with “said” and put the quote in double quotes ("he was like, what do you think?" -> "he said, 'What do you think?'").
+Vocabulary — the correct spelling of every term below must be preserved exactly:
+${vocabulary.join(', ')}`;
 
-4. Correct obvious mis-recognitions. Replace nonsense words with the most plausible term, or append “[sic]” if unsure.
+const makeUserPrompt = (context: string, text: string) =>
+	context
+		? `Preceding passage, for context only — do not edit or return it:
+"""
+…${context}
+"""
 
-5. Keep existing line breaks; if a single speaker’s block exceeds three sentences, insert an extra blank line at a natural pause.
-
-6. Do **not** add, delete, or reorder substantive content beyond these rules.
-
-7. Output only the cleaned transcript—no commentary, no explanation.
-
-Transcript to clean:
-\`\`\`
+Passage to edit:
+"""
 ${text}
-\`\`\``;
+"""`
+		: `Passage to edit:
+"""
+${text}
+"""`;
 
-interface SentenceGroup {
+export interface CleanedGroup {
 	speaker: string;
 	start: number;
 	text: string;
@@ -52,124 +66,112 @@ interface SentenceGroup {
 
 function groupSentences(
 	sentences: { speaker: string | null; start: number; text: string }[],
-	maxSentences = 10,
-): SentenceGroup[] {
-	const groups: SentenceGroup[] = [];
-	if (sentences.length === 0) return groups;
+	maxSentences: number,
+): CleanedGroup[] {
+	if (sentences.length === 0) return [];
 
-	let currentSpeaker = sentences[0].speaker ?? 'A';
+	const groups: CleanedGroup[] = [];
+	let speaker = sentences[0].speaker ?? 'A';
 	let start = sentences[0].start;
 	let chunk: string[] = [];
 
-	for (const sentence of sentences) {
-		const speaker = sentence.speaker ?? currentSpeaker;
-
-		if (speaker !== currentSpeaker || chunk.length >= maxSentences) {
-			if (chunk.length > 0) {
-				groups.push({ speaker: currentSpeaker, start, text: chunk.join(' ') });
-			}
-			currentSpeaker = speaker;
-			start = sentence.start;
+	const flush = () => {
+		if (chunk.length > 0) {
+			groups.push({ speaker, start, text: chunk.join(' ') });
 			chunk = [];
+		}
+	};
+
+	for (const sentence of sentences) {
+		// A sentence with no speaker continues the current one.
+		const sentenceSpeaker = sentence.speaker ?? speaker;
+
+		if (sentenceSpeaker !== speaker || chunk.length >= maxSentences) {
+			flush();
+			speaker = sentenceSpeaker;
+			start = sentence.start;
 		}
 
 		chunk.push(sentence.text.trim());
-
-		if (chunk.length >= maxSentences) {
-			groups.push({ speaker: currentSpeaker, start, text: chunk.join(' ') });
-			start = sentence.start;
-			chunk = [];
-		}
 	}
-
-	if (chunk.length > 0) {
-		groups.push({ speaker: currentSpeaker, start, text: chunk.join(' ') });
-	}
+	flush();
 
 	return groups;
 }
 
-async function cleanText(text: string, context: string, vocabulary: string[]): Promise<string> {
-	console.log(`    Cleaning text of length: ${text.length}`);
-	try {
-		const response = await openai.chat.completions.create({
-			model: 'gpt-5.5',
-			reasoning_effort: 'low',
-			messages: [
-				{
-					role: 'user',
-					content: makeCleaningPrompt(text, context, vocabulary),
-				},
-			],
-		});
+async function cleanGroup(
+	group: CleanedGroup,
+	context: string,
+	systemPrompt: string,
+): Promise<CleanedGroup> {
+	const response = await openai.chat.completions.create({
+		model: MODELS.mechanical,
+		reasoning_effort: 'none',
+		prompt_cache_key: CACHE_KEY,
+		messages: [
+			{ role: 'system', content: systemPrompt },
+			{ role: 'user', content: makeUserPrompt(context, group.text) },
+		],
+	});
 
-		const cleaned = response.choices[0].message.content?.trim() ?? text;
-		return cleaned
-			.replace(/^```\n?/, '')
-			.replace(/\n?```$/, '')
-			.trim();
-	} catch (error) {
-		console.error('Error cleaning text:', error);
-		return text; // Return original text if cleaning fails
-	}
+	const cleaned = response.choices[0].message.content?.trim();
+	if (!cleaned) return group;
+
+	return {
+		...group,
+		text: cleaned
+			.replace(/^"""\n?/, '')
+			.replace(/\n?"""$/, '')
+			.trim(),
+	};
 }
 
+/**
+ * Edit the transcript passage by passage. Speaker names are applied later by
+ * `renderTranscript`, so this runs without waiting on speaker identification.
+ */
 export async function cleanTranscript(
 	transcriptionResult: TranscriptionResult,
-	speakerMap?: SpeakerMap,
-): Promise<string> {
+): Promise<CleanedGroup[]> {
 	console.log('🧹 Cleaning transcript with AI...');
-	const transcript = transcriptionResult.transcript;
 	const sentences = transcriptionResult.sentences?.sentences;
 
 	if (!sentences || sentences.length === 0) {
 		console.log('  No sentence data found');
-		return transcript.text || 'No transcript available';
+		const text = transcriptionResult.transcript.text;
+		return text ? [{ speaker: 'A', start: 0, text }] : [];
 	}
 
 	console.log(`  Found ${sentences.length} sentences to clean`);
 
-	const [customSpellings, keyTerms] = await Promise.all([getCustomSpellings(), getKeyTerms()]);
+	const [customSpellings, keyTerms, knownSpeakers] = await Promise.all([
+		getCustomSpellings(),
+		getKeyTerms(),
+		getKnownSpeakers(),
+	]);
 
-	const vocabularySet = new Set<string>();
-	for (const s of customSpellings) {
-		vocabularySet.add(s.to);
-		s.from.forEach((w) => vocabularySet.add(w));
+	const vocabulary = new Set<string>(knownSpeakers.map((s) => s.name));
+	for (const spelling of customSpellings) {
+		vocabulary.add(spelling.to);
 	}
-	keyTerms.forEach((t) => vocabularySet.add(t));
+	keyTerms.forEach((term) => vocabulary.add(term));
 
-	// Add identified speaker names to vocabulary
-	if (speakerMap) {
-		for (const name of speakerMap.values()) {
-			vocabularySet.add(name);
-		}
-	}
+	const systemPrompt = makeSystemPrompt(Array.from(vocabulary));
+	const groups = groupSentences(sentences, SENTENCES_PER_GROUP);
+	console.log(
+		`  Created ${groups.length} groups for cleaning (parallel, concurrency=${CONCURRENCY})`,
+	);
 
-	const vocabulary = Array.from(vocabularySet);
-
-	const groups = groupSentences(sentences, 10);
-	console.log(`  Created ${groups.length} groups for cleaning (parallel, concurrency=10)`);
-
-	const speakerMapResolved = speakerMap ?? new Map<string, string>();
-
-	const cleanedLines = await processWithPool(
+	return processWithPool(
 		groups,
 		async (group, index) => {
-			const contextGroups = groups
-				.slice(Math.max(0, index - 2), index)
-				.map((g) => `${formatSpeakerName(g.speaker, speakerMapResolved)}: ${g.text}`)
-				.join('\n');
-
-			const cleanedText = await cleanText(group.text, contextGroups, vocabulary);
-			const speakerLabel = formatSpeakerName(group.speaker, speakerMapResolved);
-			return `[${formatTimestamp(group.start)}] **${speakerLabel}**: ${cleanedText}`;
+			const previous = groups[index - 1];
+			const context = previous ? previous.text.slice(-CONTEXT_CHARS) : '';
+			return cleanGroup(group, context, systemPrompt);
 		},
 		{
-			concurrency: 10,
-			fallback: (group) => {
-				const speakerLabel = formatSpeakerName(group.speaker, speakerMapResolved);
-				return `[${formatTimestamp(group.start)}] **${speakerLabel}**: ${group.text}`;
-			},
+			concurrency: CONCURRENCY,
+			fallback: (group) => group,
 			onProgress: (completed, total) => {
 				if (completed % 10 === 0 || completed === total) {
 					console.log(`    Cleaned ${completed}/${total} groups`);
@@ -177,6 +179,23 @@ export async function cleanTranscript(
 			},
 		},
 	);
+}
 
-	return cleanedLines.join('\n\n');
+export function renderTranscript(groups: CleanedGroup[], speakerMap: SpeakerMap): string {
+	// Distinct diarization labels can resolve to one person, so adjacent blocks
+	// are joined under a single heading rather than repeating the name.
+	const blocks: { speaker: string; start: number; text: string }[] = [];
+	for (const group of groups) {
+		const speaker = formatSpeakerName(group.speaker, speakerMap);
+		const previous = blocks.at(-1);
+		if (previous?.speaker === speaker) {
+			previous.text += ` ${group.text}`;
+		} else {
+			blocks.push({ speaker, start: group.start, text: group.text });
+		}
+	}
+
+	return blocks
+		.map((block) => `[${formatTimestamp(block.start)}] **${block.speaker}**: ${block.text}`)
+		.join('\n\n');
 }

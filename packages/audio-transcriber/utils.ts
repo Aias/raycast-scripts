@@ -37,9 +37,20 @@ export function createOutputFolder(inputPath: string): string {
 	return outputDir;
 }
 
+/**
+ * How many speakers to expect. An exact count is a hard constraint that hurts
+ * diarization when it is wrong; a range is the safer hint when the count is
+ * uncertain.
+ */
+export interface SpeakerHint {
+	exact?: number;
+	min?: number;
+	max?: number;
+}
+
 export interface ParsedArguments {
 	inputPath: string;
-	speakersExpected?: number;
+	speakers?: SpeakerHint;
 }
 
 export function parseAndValidateFile(
@@ -71,16 +82,28 @@ export function parseAndValidateFile(
 	return resolvedPath;
 }
 
-export function parseSpeakersArg(arg: string | undefined): number | undefined {
+/** Accepts an exact count ("3") or a range ("2-5"). */
+export function parseSpeakersArg(arg: string | undefined): SpeakerHint | undefined {
 	if (!arg) return undefined;
 
-	const parsed = parseInt(arg, 10);
-	if (isNaN(parsed) || parsed < 1) {
+	const range = arg.match(/^(\d+)\s*-\s*(\d+)$/);
+	if (range) {
+		const min = Number(range[1]);
+		const max = Number(range[2]);
+		if (min < 1 || max < min) {
+			console.error(`⛔ Invalid speaker range: ${arg}`);
+			process.exit(1);
+		}
+		return { min, max };
+	}
+
+	const exact = Number(arg);
+	if (!Number.isInteger(exact) || exact < 1) {
 		console.error(`⛔ Invalid number of speakers: ${arg}`);
 		process.exit(1);
 	}
 
-	return parsed;
+	return { exact };
 }
 
 export function parseCommandLineArgs(): ParsedArguments {
@@ -91,9 +114,9 @@ export function parseCommandLineArgs(): ParsedArguments {
 	const inputPath = parseAndValidateFile(process.argv[2], '⛔ Please provide an input file path');
 
 	// Parse optional speakers count
-	const speakersExpected = parseSpeakersArg(process.argv[3]);
+	const speakers = parseSpeakersArg(process.argv[3]);
 
-	return { inputPath, speakersExpected };
+	return { inputPath, speakers };
 }
 
 export function parseTranscriptArgs(): { transcriptPath: string } {
