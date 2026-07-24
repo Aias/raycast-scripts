@@ -24,6 +24,14 @@ import type { TranscriptionConfig } from './transcription.config.types.js';
  *     { from: ["api", "API", "a p i"], to: "API" },
  *   ],
  *
+ *   // People you record with. A description gives both identification passes a
+ *   // role to match against, which is the only way to name a speaker who is
+ *   // never addressed by name in the audio. Make it discriminating.
+ *   knownSpeakers: [
+ *     "Dana",
+ *     { name: "Jarrod", description: "backend, owns the ingest pipeline" },
+ *   ],
+ *
  *   keyTerms: [
  *     // Technical terms
  *     "API", "SDK", "GraphQL",
@@ -37,7 +45,7 @@ import type { TranscriptionConfig } from './transcription.config.types.js';
  *
  *   transcriptionOptions: {
  *     // Use a different speech model
- *     speech_models: ["universal-3-pro"],
+ *     speech_models: ["universal-2"],
  *
  *     // Disable features you don't need
  *     entity_detection: false,
@@ -53,7 +61,10 @@ export const defaultConfig: TranscriptionConfig = {
 	// Default transcription options
 	transcriptionOptions: {
 		// Model and language
-		speech_models: ['universal-3-pro'], // Options: "universal-3-pro" (best quality), "conformer-2", "universal-2" (fastest)
+		// The API accepts any string here without validating it, so a retired model
+		// name degrades transcription silently. `transcribe` asserts on the
+		// `speech_model_used` the API reports back.
+		speech_models: ['universal-3-5-pro'], // Options: "universal-3-5-pro" (best quality), "universal-2" (cheapest, 99 languages)
 		language_code: 'en_us',
 		temperature: 0, // 0 = most deterministic, 1 = most creative
 
@@ -64,10 +75,12 @@ export const defaultConfig: TranscriptionConfig = {
 		speaker_labels: true, // Identify different speakers
 		// Resolve diarized speakers (A, B, C) to real names inferred from the
 		// conversation itself (self-introductions, direct address). Requires
-		// speaker_labels. Omitting known_values lets the model infer names freely.
+		// speaker_labels. `transcribe` supplies the roster from knownSpeakers.
+		// Medium effort is the level documented for conference-room audio,
+		// crosstalk, and recordings past ten minutes; it costs more per hour.
 		speech_understanding: {
 			request: {
-				speaker_identification: { speaker_type: 'name' },
+				speaker_identification: { speaker_type: 'name', effort: 'medium' },
 			},
 		},
 		punctuate: true, // Must be true if speaker_labels is true

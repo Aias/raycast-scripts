@@ -20,11 +20,11 @@
       "name": "audio-transcriber",
       "version": "1.0.0",
       "dependencies": {
-        "assemblyai": "~4.33.3",
+        "assemblyai": "~4.36.4",
         "dotenv": "~17.4.2",
         "ffmpeg-static": "~5.3.0",
         "fluent-ffmpeg": "~2.1.3",
-        "openai": "~6.41.0",
+        "openai": "~6.49.0",
         "p-limit": "~7.3.0",
         "zod": "~4.4.3",
       },
@@ -145,7 +145,7 @@
 
     "asn1": ["asn1@0.2.6", "", { "dependencies": { "safer-buffer": "~2.1.0" } }, "sha512-ix/FxPn0MDjeyJ7i/yoHGFt/EX6LyNbxSEhPPXODPL+KB0VPk86UYfL0lMdy+KCnv+fmvIzySwaK5COwqVbWTQ=="],
 
-    "assemblyai": ["assemblyai@4.33.3", "", { "dependencies": { "ws": "^8.18.0" } }, "sha512-KLu/lUAZEYz17zWMV6kk9nJyzzO1kItpZ5vruW5WpNjTpbgye58V1PKUOCWNndyxBn099lEBg3V5CbxKq1plAw=="],
+    "assemblyai": ["assemblyai@4.36.4", "", { "dependencies": { "ws": "^8.18.0" } }, "sha512-8d1JTxZ7lMxx1GNAttsHeVHv1tXn0pw6hr2cSQ2Len5PKx7Fxn9/1rX5jhusYVxxVXw3qah+IROKRYH6uCDlpA=="],
 
     "assert-plus": ["assert-plus@1.0.0", "", {}, "sha512-NfJ4UzBCcQGLDlQq7nHxH+tv3kyZ0hHQqF5BO6J7tNJeP5do1llPr8dZ8zHonfhAu0PHAdMkSo+8o0wxg9lZWw=="],
 
@@ -401,7 +401,7 @@
 
     "onetime": ["onetime@5.1.2", "", { "dependencies": { "mimic-fn": "^2.1.0" } }, "sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg=="],
 
-    "openai": ["openai@6.41.0", "", { "peerDependencies": { "ws": "^8.18.0", "zod": "^3.25 || ^4.0" }, "optionalPeers": ["ws", "zod"] }, "sha512-IGWPopZq6Rjoynjfb3NSLf/z2MTw7UiOsm9TAjPGAjUESH7Uq41Trg4QWehBEn58p74i+m7uoRPV2vXcpPXhyA=="],
+    "openai": ["openai@6.49.0", "", { "peerDependencies": { "@aws-sdk/credential-provider-node": ">=3.972.0 <4", "@smithy/hash-node": ">=4.3.0 <5", "@smithy/signature-v4": ">=5.4.0 <6", "ws": "^8.18.0", "zod": "^3.25 || ^4.0" }, "optionalPeers": ["@aws-sdk/credential-provider-node", "@smithy/hash-node", "@smithy/signature-v4", "ws", "zod"] }, "sha512-aYCc0C6L864eR6WSYIwQGyXriw/nIyZx0ObvhzOEVuk0zoBDpynjSbrionWI7q65B5H8jJX0DXR9snEzM6bfPg=="],
 
     "optionator": ["optionator@0.9.4", "", { "dependencies": { "deep-is": "^0.1.3", "fast-levenshtein": "^2.0.6", "levn": "^0.4.1", "prelude-ls": "^1.2.1", "type-check": "^0.4.0", "word-wrap": "^1.2.5" } }, "sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g=="],
 

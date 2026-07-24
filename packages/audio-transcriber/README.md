@@ -4,11 +4,9 @@ A TypeScript-based audio transcription and summarization tool using AssemblyAI f
 
 ## Features
 
-- Converts audio files to optimal format (16kHz mono WAV)
-- Speaker diarization with name identification — AssemblyAI infers speaker names from the audio, reconciled by a GPT-5.5 pass against a known-speaker roster
-- Smart text formatting with proper punctuation
-- Removes filler words (um, uh, like) for cleaner transcripts
-- Chunk-based summarization for long recordings
+- Converts audio files to 16kHz mono FLAC, the signal AssemblyAI transcribes from
+- Speaker diarization with name identification — AssemblyAI infers speaker names from the audio, reconciled by an LLM pass against a known-speaker roster
+- Clean-verbatim editing: fillers, stutters, and repetitions come out; wording stays as spoken
 - Outputs markdown file with summary and full transcript
 - Written in TypeScript for better type safety
 - Uses Bun runtime for fast performance
@@ -56,4 +54,4 @@ Creates a `.transcript.md` file in the same directory as the input audio file co
 ## API Notes
 
 - Uses AssemblyAI for high-quality transcription with speaker diarization and speaker identification (real names inferred from the conversation)
-- Uses OpenAI's GPT for cleaning and summarization (currently configured for gpt-5.5)
+- Uses OpenAI for cleaning and summarization; model assignments live in `openai.ts`

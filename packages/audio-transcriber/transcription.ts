@@ -5,12 +5,14 @@ import {
 	type Transcript,
 	type TranscribeParams,
 } from 'assemblyai';
-import { formatTimestamp } from './utils.js';
+import { formatTimestamp, type SpeakerHint } from './utils.js';
 import {
 	getCustomSpellings,
 	getKeyTerms,
+	getKnownSpeakers,
 	getTranscriptionOptions,
 } from './transcription.config.loader.js';
+import type { SpeakerIdentificationOptions } from './transcription.config.types.js';
 
 const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
 
@@ -30,17 +32,20 @@ export interface TranscriptionResult {
 
 export async function transcribe(
 	audioPath: string,
-	speakersExpected?: number,
+	speakers?: SpeakerHint,
 ): Promise<TranscriptionResult> {
 	console.log('🎙️ Transcribing with AssemblyAI...');
-	if (speakersExpected) {
-		console.log(`   Expected speakers: ${speakersExpected}`);
+	if (speakers?.exact !== undefined) {
+		console.log(`   Expected speakers: exactly ${speakers.exact}`);
+	} else if (speakers) {
+		console.log(`   Expected speakers: ${speakers.min}–${speakers.max}`);
 	}
 
 	// Load config values
-	const [customSpellings, keyTerms, transcriptionOptions] = await Promise.all([
+	const [customSpellings, keyTerms, knownSpeakers, transcriptionOptions] = await Promise.all([
 		getCustomSpellings(),
 		getKeyTerms(),
+		getKnownSpeakers(),
 		getTranscriptionOptions(),
 	]);
 
@@ -53,8 +58,27 @@ export async function transcribe(
 	const params: TranscribeParams = {
 		...transcriptionOptions,
 		audio: audioPath,
-		speakers_expected: speakersExpected,
 	};
+	// An exact count is a hard constraint — AssemblyAI degrades diarization when
+	// it is wrong — so a range is the safer hint unless the count is certain.
+	if (speakers?.exact !== undefined) {
+		params.speakers_expected = speakers.exact;
+	} else if (speakers) {
+		params.speaker_options = {
+			min_speakers_expected: speakers.min,
+			max_speakers_expected: speakers.max,
+		};
+	}
+	// Give the audio-based identification the same roster the transcript-based
+	// reconciliation gets. Telling voices apart is what it can do that text cannot.
+	const identification = transcriptionOptions.speech_understanding?.request?.speaker_identification;
+	if (identification && knownSpeakers.length > 0) {
+		const withRoster: SpeakerIdentificationOptions = {
+			...identification,
+			speakers: knownSpeakers,
+		};
+		params.speech_understanding = { request: { speaker_identification: withRoster } };
+	}
 	// Only send enrichment fields when populated. Empty arrays add nothing, and
 	// AssemblyAI rejects keyterms_prompt_options without a keyterms_prompt.
 	if (customSpellings.length > 0) {
@@ -74,7 +98,17 @@ export async function transcribe(
 	}
 
 	const elapsed = formatElapsed(Date.now() - startTime);
-	console.log(`   ✅ Transcription complete (${elapsed})`);
+	const modelUsed = transcript.speech_model_used;
+	console.log(`   ✅ Transcription complete (${elapsed}, ${modelUsed ?? 'model unreported'})`);
+
+	// The API accepts unknown model names without complaint, so a retired or
+	// misspelled name in the config surfaces only here.
+	const requested = transcriptionOptions.speech_models;
+	if (modelUsed && requested?.length && !requested.includes(modelUsed)) {
+		console.warn(
+			`   ⚠️  Requested ${requested.join(', ')} but AssemblyAI ran ${modelUsed} — check the model name.`,
+		);
+	}
 
 	// Check for errors
 	if (transcript.error) {

@@ -5,7 +5,7 @@
 # @raycast.mode fullOutput
 # @raycast.argument1 { "type": "dropdown", "placeholder": "Mode", "data": [{"title": "Full Pipeline", "value": "full"}, {"title": "Transcribe Only", "value": "transcribe"}] }
 # @raycast.argument2 { "type": "text", "placeholder": "Audio file path", "optional": true }
-# @raycast.argument3 { "type": "text", "placeholder": "Number of speakers", "optional": true }
+# @raycast.argument3 { "type": "text", "placeholder": "Speakers: 3 or 2-5", "optional": true }
 # @raycast.icon 🎙
 # @raycast.packageName AI Utilities
 # @raycast.author Nick Trombley
