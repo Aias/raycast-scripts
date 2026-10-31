@@ -2,8 +2,8 @@
 	"name": "clipboard-to-markdown",
 	"type": "module",
 	"dependencies": {
-		"clipboardy": "5.3.1",
-		"turndown": "7.2.2"
+		"clipboardy": "~5.3.2",
+		"turndown": "~7.2.4"
 	},
 	"devDependencies": {
 		"@types/clipboardy": "2.0.4",
@@ -15,7 +15,7 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,js,json,md}\"",
 		"format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "../../node_modules/@typescript/native/bin/tsc --noEmit",
 		"check": "bun run format && bun run typecheck && bun run lint"
 	}
 }

@@ -10,7 +10,7 @@
 		"lint:check": "eslint .",
 		"format": "prettier --write \"**/*.{ts,json,md}\"",
 		"format:check": "prettier --check \"**/*.{ts,json,md}\"",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "../../node_modules/@typescript/native/bin/tsc --noEmit",
 		"check": "bun run format && bun run typecheck && bun run lint:check"
 	},
 	"dependencies": {}
