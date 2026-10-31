@@ -11,10 +11,10 @@
 		"check": "bun run format && bun run lint"
 	},
 	"dependencies": {
-		"clipboardy": "5.3.1",
+		"clipboardy": "~5.3.2",
 		"markdown-pdf": "11.0.0"
 	},
 	"engines": {
-		"node": ">=22.0.0"
+		"node": ">=26.0.0"
 	}
 }

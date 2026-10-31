@@ -10,19 +10,20 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,js,json,md}\"",
 		"format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
-		"typecheck": "tsc -b",
+		"typecheck": "node_modules/@typescript/native/bin/tsc -b",
 		"check": "bun run format && bun run typecheck && bun run lint",
 		"test": "bun test"
 	},
 	"devDependencies": {
 		"@eslint/js": "10.0.1",
-		"@types/node": "25.5.0",
-		"eslint": "10.0.3",
+		"@types/node": "~26.6.6",
+		"@typescript/native": "npm:typescript@~7.0.2",
+		"eslint": "~10.14.0",
 		"eslint-config-prettier": "10.1.8",
-		"eslint-plugin-prettier": "5.5.5",
-		"jiti": "2.4.2",
-		"prettier": "3.8.1",
-		"typescript": "5.9.3",
-		"typescript-eslint": "8.57.1"
+		"eslint-plugin-prettier": "~5.5.7",
+		"jiti": "~2.7.0",
+		"prettier": "~3.9.10",
+		"typescript": "~6.0.3",
+		"typescript-eslint": "~8.72.1"
 	}
 }
